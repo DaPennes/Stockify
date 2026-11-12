@@ -91,8 +91,8 @@ public static class StockifyMaterialSearch
                 // Balanced sort considering availability and total
                 sorted.Sort((a, b) =>
                 {
-                    var aScore = a.Available + (a.Total / 10);
-                    var bScore = b.Available + (b.Total / 10);
+                    var aScore = a.Stored + (a.Total / 10);
+                    var bScore = b.Stored + (b.Total / 10);
                     return descending ? bScore.CompareTo(aScore) : aScore.CompareTo(bScore);
                 });
                 break;

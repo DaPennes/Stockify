@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+  <ThingDef ParentName="StorageShelfBase">
+    <defName>StockifyShelf</defName>
+    <label>Stockify shelf</label>
+    <description>A supply shelf that can be assigned to a workbench and replenished from selected warehouses.</description>
+    <costStuffCount>10</costStuffCount>
+    <statBases>
+      <MaxHitPoints>50</MaxHitPoints>
+      <Mass>4</Mass>
+      <WorkToBuild>250</WorkToBuild>
+    </statBases>
+    <comps>
+      <li Class="CompProperties_Styleable" />
+      <li Class="Stockify.CompProperties_StockifyShelf" />
+    </comps>
+    <building>
+      <defaultStorageSettings>
+        <priority>Important</priority>
+        <filter>
+          <categories>
+            <li>Foods</li>
+            <li>Manufactured</li>
+            <li>ResourcesRaw</li>
+            <li>Items</li>
+            <li>Weapons</li>
+            <li>Apparel</li>
+            <li>BodyParts</li>
+          </categories>
+        </filter>
+      </defaultStorageSettings>
+    </building>
+  </ThingDef>
+</Defs>

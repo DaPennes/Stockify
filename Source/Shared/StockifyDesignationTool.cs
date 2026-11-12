@@ -12,6 +12,18 @@ public class StockifyDesignationTool : Verse.Designator
 
     public CellRect SelectionArea { get; set; } = CellRect.Empty;
 
+    public override bool DragDrawMeasurements => true;
+
+    public void SetNetwork(StockifyNetwork network)
+    {
+        _currentNetwork = network;
+    }
+
+    public void StartNewNetwork()
+    {
+        _currentNetwork = null;
+    }
+
     public override AcceptanceReport CanDesignateCell(IntVec3 cell)
     {
         return Find.CurrentMap != null && cell.InBounds(Find.CurrentMap);
@@ -36,21 +48,40 @@ public class StockifyDesignationTool : Verse.Designator
         var mapComponent = map?.GetComponent<StockifyMapComponent>();
         if (mapComponent == null) return;
 
+        var overlapsExisting = mapComponent.Networks.Any(network =>
+            network != _currentNetwork && AreasOverlap(area, network.DesignatedArea));
         if (_currentNetwork != null)
         {
             _currentNetwork.DesignatedArea = area;
-            _currentNetwork.UpdateShelfRegistration(map);
+            mapComponent.RebuildShelfRegistration();
             Messages.Message($"Updated network {_currentNetwork.Name} ({area.Area} cells).",
                 MessageTypeDefOf.PositiveEvent);
+            ShowOverlapWarning(overlapsExisting);
             return;
         }
 
         var network = mapComponent.CreateNetwork(
             $"Storage Area {mapComponent.Networks.Count + 1}", area);
-        network.UpdateShelfRegistration(map);
         _currentNetwork = network;
 
         Messages.Message($"Created network {network.Name} with {network.RegisteredShelves.Count} shelves.",
             MessageTypeDefOf.PositiveEvent);
+        ShowOverlapWarning(overlapsExisting);
+    }
+
+    private static bool AreasOverlap(CellRect first, CellRect second)
+    {
+        return first.minX <= second.maxX && first.maxX >= second.minX &&
+               first.minZ <= second.maxZ && first.maxZ >= second.minZ;
+    }
+
+    private static void ShowOverlapWarning(bool overlapsExisting)
+    {
+        if (overlapsExisting)
+        {
+            Messages.Message(
+                "Stockify storage areas overlap. Buildings in the overlap belong to the earlier network.",
+                MessageTypeDefOf.NeutralEvent);
+        }
     }
 }

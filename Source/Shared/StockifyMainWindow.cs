@@ -35,7 +35,15 @@ public class StockifyMainWindow : Verse.Window
 
         if (_mapComponent == null || _mapComponent.Networks.Count == 0)
         {
-            listing.Label("No network selected. Use the Stockify designation tool to create one.");
+            listing.Label(_mapComponent == null
+                ? "Open a colony map to manage Stockify warehouses."
+                : "No warehouse has been designated yet.");
+            if (_mapComponent != null &&
+                Widgets.ButtonText(listing.GetRect(30f), "Designate a new warehouse"))
+            {
+                StockifyMod.Instance.DesignationTool.StartNewNetwork();
+                Find.DesignatorManager.Select(StockifyMod.Instance.DesignationTool);
+            }
             listing.End();
             return;
         }
@@ -71,6 +79,8 @@ public class StockifyMainWindow : Verse.Window
                 DrawNetworkTab(listing);
                 break;
             case 1:
+                DrawToggle(listing, "GET", _selectedNetwork.GetEnabled,
+                    enabled => _selectedNetwork.GetEnabled = enabled);
                 if (Widgets.ButtonText(listing.GetRect(35f), "Request materials"))
                 {
                     Find.WindowStack.Add(new StockifyGetWindow(_selectedNetwork));
@@ -96,9 +106,33 @@ public class StockifyMainWindow : Verse.Window
     private void DrawNetworkTab(Listing_Standard listing)
     {
         listing.Label($"Shelves: {_selectedNetwork.RegisteredShelves.Count}");
-        foreach (var material in StockifyInventoryManager.GetAllMaterials(_selectedNetwork))
+        var incoming = CountIncomingItems(_selectedNetwork);
+        var outgoingDemand = _mapComponent.LocalShelves
+            .Sum(shelf => shelf.GetOutstandingDemandFrom(_selectedNetwork));
+        listing.Label($"Incoming: {incoming} items in Stockify hauling jobs");
+        listing.Label($"Outgoing demand: {outgoingDemand} items requested by linked shelves");
+        if (Widgets.ButtonText(listing.GetRect(30f),
+                $"Warehouse transfer priority: {_selectedNetwork.StoragePriority} (increase)"))
+            _selectedNetwork.StoragePriority = (_selectedNetwork.StoragePriority + 1) % 4;
+        if (Widgets.ButtonText(listing.GetRect(30f), "Configure warehouse material filter"))
+            Find.WindowStack.Add(new StockifyNetworkFilterWindow(_selectedNetwork));
+        if (Widgets.ButtonText(listing.GetRect(30f), "Manage warehouse shelves"))
+            Find.WindowStack.Add(new StockifyNetworkShelvesWindow(_selectedNetwork));
+        foreach (var material in StockifyInventoryManager.GetCachedMaterials(_selectedNetwork))
         {
-            listing.Label($"{material.MaterialLabel}: {material.Available} available, {material.Reserved} reserved");
+            listing.Label($"{material.MaterialLabel}: {material.Stored} stored");
+        }
+
+        listing.Gap(8f);
+        if (Widgets.ButtonText(listing.GetRect(30f), "Designate a new warehouse"))
+        {
+            StockifyMod.Instance.DesignationTool.StartNewNetwork();
+            Find.DesignatorManager.Select(StockifyMod.Instance.DesignationTool);
+        }
+        if (Widgets.ButtonText(listing.GetRect(30f), "Resize selected warehouse"))
+        {
+            StockifyMod.Instance.DesignationTool.SetNetwork(_selectedNetwork);
+            Find.DesignatorManager.Select(StockifyMod.Instance.DesignationTool);
         }
 
         listing.Gap(8f);
@@ -109,6 +143,35 @@ public class StockifyMainWindow : Verse.Window
             _selectedNetwork.Name = _newNetworkName.Trim();
             _newNetworkName = "";
         }
+    }
+
+    private static int CountIncomingItems(StockifyNetwork network)
+    {
+        var map = Find.CurrentMap;
+        if (map == null)
+            return 0;
+
+        var storageCells = new HashSet<IntVec3>(network.RegisteredShelves
+            .Where(shelf => shelf.Thing is Building_Storage)
+            .SelectMany(shelf => ((Building_Storage)shelf.Thing).AllSlotCells()));
+        var workGivers = new HashSet<WorkGiverDef>
+        {
+            DefDatabase<WorkGiverDef>.GetNamed("StockifyReplenishShelf"),
+            DefDatabase<WorkGiverDef>.GetNamed("StockifyGetShelf")
+        };
+        var count = 0;
+        foreach (var pawn in map.mapPawns.AllPawnsSpawned)
+        {
+            var job = pawn.CurJob;
+            if (job?.def != JobDefOf.HaulToCell ||
+                !workGivers.Contains(job.workGiverDef) ||
+                !storageCells.Contains(job.targetB.Cell))
+                continue;
+
+            count += job.count > 0 ? job.count : job.targetA.Thing?.stackCount ?? 0;
+        }
+
+        return count;
     }
 
     private static void DrawToggle(Listing_Standard listing, string label, bool enabled, Action<bool> setEnabled)

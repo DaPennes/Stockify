@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+  <MainButtonDef>
+    <defName>Stockify</defName>
+    <label>stockify</label>
+    <description>Manage Stockify warehouses and supply shelves.</description>
+    <workerClass>Stockify.StockifyMainButtonWorker</workerClass>
+    <order>95</order>
+    <closesWorldView>true</closesWorldView>
+  </MainButtonDef>
+</Defs>

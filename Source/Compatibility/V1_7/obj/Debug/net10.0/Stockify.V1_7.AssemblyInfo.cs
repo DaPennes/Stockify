@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Stockify.V1_7")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a981e150dbd08aebca5299dd6dbab446b2772b36")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5e9ebe0d4cbcda88d27c0e928984684c2c0b0adc")]
 [assembly: System.Reflection.AssemblyProductAttribute("Stockify.V1_7")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Stockify.V1_7")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

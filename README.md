@@ -1,85 +1,47 @@
-# Stockify - RimWorld 1.6/1.7 Storage Network Mod
+# Stockify
 
-## Overview
-Stockify is an intelligent storage network and quality-of-life mod that connects existing vanilla shelves through player-designated storage areas. Players can select an area using a dedicated selection tool, and vanilla shelves within that area become registered members of a storage network.
+Stockify is a work-in-progress storage and supply mod for RimWorld 1.6 and 1.7. It uses real item stacks and vanilla hauling jobs; it does not teleport or synthesize materials.
 
-## Core Features
+## Current functionality
 
-### Storage Networks
-- Designate storage areas using a tool similar to the vanilla Home Area tool
-- Automatically detect and register eligible vanilla shelves
-- Support multiple independent networks on the same map
-- Each network has its own name, settings, and configuration
+- Mod-list metadata and version-specific folders for RimWorld 1.6 and 1.7.
+- Persistent map storage networks that discover vanilla storage buildings inside a designated area.
+- Connected warehouse shelves can be included/excluded from the network UI and the choice is saved.
+- Overlapping warehouse areas do not double-count a storage building; the earlier network owns overlapping buildings unless that shelf is explicitly excluded.
+- A Stockify Shelf building with saved warehouse and workbench assignments.
+- Per-material minimum, target, and maximum stock controls, plus shelf naming and transfer priorities.
+- Searchable warehouse material exclusions and configurable warehouse transfer priority.
+- A warehouse management window and a designation tool for creating or resizing storage areas.
+- Vanilla hauling jobs for:
+  - INPUT: moving eligible loose items into enabled warehouse shelves only when vanilla storage selection chooses that warehouse as the best destination.
+  - GET: search materials, select a warehouse and compatible Stockify Shelf, and request a quantity; the dialog estimates unreserved stock, subtracts outstanding requests, caps fulfillment, and reports any shortfall.
+  - PULL: replenishing an assigned shelf from selected warehouses based on active bills (including bill ingredient restrictions) or configured stock levels.
+  - OUTPUT: returning excess shelf stock to its selected warehouses while retaining active bill requirements.
+- Vanilla shelf filters, storage acceptance rules, item forbidden state, and pawn reservations are respected by these hauling jobs.
 
-### GET System
-- Request specific materials from connected storage networks
-- Search by material name and specify quantities
-- Partial requests when insufficient materials are available
-- Automatic source shelf selection with reservation system
+## Limitations
 
-### PULL System (Signature Feature)
-- Compatible vanilla workbenches can retrieve crafting ingredients from connected networks
-- Detect ingredient requirements from production bills
-- Reserve physical item stacks and transfer them to workbench-accessible locations
-- Controlled material-transfer system that minimizes colonist hauling trips
+- This is not a finished implementation of the full development specification.
+- GET can be cancelled; its distinct Stockify hauling jobs are interrupted through vanilla job cleanup, releasing their reservations. Progress is shown on the shelf inspect panel rather than in a transfer queue.
+- Warehouse overview quantities are keyed by ThingDef and represent physical stored stacks. GET separately estimates unreserved quantities from vanilla reservations and in-flight hauling jobs; a stack reserved by another vanilla job is not counted as requestable.
+- Per-material filters on individual Stockify shelves still use their vanilla storage tab; recovering interrupted requests with detailed per-job status is incomplete.
+- A headless RimWorld 1.7.5005 startup was attempted with Stockify enabled and reached `UIRoot` without Stockify-specific log entries or the earlier language/initialization warnings. The headless run then produced input-related `KeyBindingDef` exceptions in `ScreenshotTaker`; it does not verify interactive use, hauling, cancellation, or save/load.
+- GET/PULL/INPUT/OUTPUT and save/load behavior have not been tested interactively. Do not treat successful compilation or headless startup as gameplay validation.
+- The 1.6 project currently compiles against the assemblies available in this environment; a separate RimWorld 1.6 installation was not available to verify its APIs or runtime behavior.
+- Validation performed: both version projects built successfully with 0 warnings and 0 errors; all 5 XML files parsed and had no duplicate `defName` values. No automated test project exists in this repository.
+- No release ZIP is included.
 
-### INPUT System
-- Control which materials can enter each network
-- Automatically accept compatible hauled materials
-- Respect shelf filters and storage priorities
-- Check available storage capacity
+## Install
 
-### OUTPUT System
-- Control which materials can leave each network
-- Support workbench output destinations
-- Priority-based destination selection
-- Prevent unintended removal of restricted items
+Copy this folder into RimWorld's `Mods` directory, then enable Stockify in the in-game Mods menu. `LoadFolders.xml` selects the matching version folder and shared definitions.
 
-### Smart Storage Management
-- Three selection modes: Nearest First, Priority First, Balanced
-- Intelligent shelf selection based on distance, priority, and capacity
-- Respect vanilla storage restrictions at all times
+## Build
 
-### User Interface
-- Clean, vanilla-style network windows
-- Material inventory with available/reserved/total quantities
-- Four independent toggles: GET, PULL, INPUT, OUTPUT
-- Network gizmos: Open, Rename, Enable/Disable, Expand Area, Clear Designation
+Requires the .NET SDK and RimWorld assemblies. Set the `RimWorldDir` MSBuild property if the game installation is not in the default Steam location.
 
-### Save/Load Support
-- All network configurations survive saving and loading
-- Uses RimWorld's Scribe serialization system
-- Rebuilds inventory caches after loading
-- Safe recovery from interrupted transfers
+```powershell
+dotnet build Source\Compatibility\V1_7\Stockify.V1_7.csproj
+dotnet build Source\Compatibility\V1_6\Stockify.V1_6.csproj
+```
 
-## Installation
-1. Download the mod ZIP archive
-2. Extract to RimWorld's Mods folder: `RimWorld/Mods/Stockify/`
-3. Launch RimWorld and enable Stockify from the mod menu
-4. Choose RimWorld 1.6 or 1.7 version appropriate for your game
-
-## Version Support
-- **RimWorld 1.7**: net10.0 target framework, Harmony 3
-- **RimWorld 1.6**: net472 target framework, Harmony 2
-
-## Building from Source
-- Requires the .NET SDK and the RimWorld assemblies for the target game version.
-- Build RimWorld 1.7 with `dotnet build Source/Compatibility/V1_7/Stockify.V1_7.csproj`.
-- Build RimWorld 1.6 with `dotnet build Source/Compatibility/V1_6/Stockify.V1_6.csproj`.
-- Set the `RimWorldDir` MSBuild property if the game files are not in the default Steam installation path.
-- The mod DLLs are written to `1.7/Assemblies` and `1.6/Assemblies`, respectively.
-
-## Known Limitations
-- Mod only works with vanilla shelves; modded storage buildings require compatible APIs
-- Physical-item transfer system; virtual ingredient access not implemented
-- Multiple networks on same map but no cross-network material sharing
-- Performance scales with network size; large colonies may see minor overhead
-
-## Development Status
-- Phase 1: Foundation (Mod initialization, designation tool, network creation, save/load) - Complete
-- Phase 2: Storage Management (Inventory calculations, material search, network settings) - Planned
-- Phase 3: GET System (Material requests, reservations, transfers) - Planned
-- Phase 4: PULL System (Workbench integration, bill detection) - Planned
-- Phase 5: Input and Output (Material flow management) - Planned
-- Phase 6: UI and Optimization (Final interface, performance) - Planned
-- Phase 7: Testing and Release - Planned
+The assemblies are written to `1.7\Assemblies\Stockify.dll` and `1.6\Assemblies\Stockify.dll`.

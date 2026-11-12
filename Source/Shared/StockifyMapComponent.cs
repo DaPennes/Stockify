@@ -9,15 +9,24 @@ public class StockifyMapComponent : Verse.MapComponent
     /// <summary>
     /// Gets or sets the collection of storage networks on this map.
     /// </summary>
-    public List<StockifyNetwork> Networks { get; set; } = new List<StockifyNetwork>();
+    public List<StockifyNetwork> Networks { get; private set; } = new List<StockifyNetwork>();
+    public List<CompStockifyShelf> LocalShelves { get; private set; } = new List<CompStockifyShelf>();
 
     /// <summary>
     /// Initializes the map component.
     /// </summary>
     /// <param name="map">The map to initialize for.</param>
-    public StockifyMapComponent(Verse.Map map = null) : base(map)
+    public StockifyMapComponent(Verse.Map map) : base(map)
     {
-        // Networks will be loaded from save or created fresh
+    }
+
+    public override void ExposeData()
+    {
+        base.ExposeData();
+
+        var networks = Networks;
+        Scribe_Collections.Look(ref networks, "stockifyNetworks", LookMode.Deep);
+        Networks = networks ?? new List<StockifyNetwork>();
     }
 
     /// <summary>
@@ -26,7 +35,29 @@ public class StockifyMapComponent : Verse.MapComponent
     public override void FinalizeInit()
     {
         base.FinalizeInit();
+        RebuildLocalShelfRegistration();
         this.RebuildShelfRegistration();
+    }
+
+    public override void MapComponentTick()
+    {
+        base.MapComponentTick();
+        if (Find.TickManager.TicksGame % 250 != 0) return;
+
+        RebuildLocalShelfRegistration();
+        foreach (var network in Networks)
+        {
+            network.UpdateShelfRegistration(map);
+            network.UpdateMaterialInventory();
+        }
+    }
+
+    public void RebuildLocalShelfRegistration()
+    {
+        LocalShelves = map.listerThings.AllThings
+            .Select(thing => thing.TryGetComp<CompStockifyShelf>())
+            .Where(comp => comp != null && !comp.parent.Destroyed)
+            .ToList();
     }
 
     /// <summary>
@@ -48,7 +79,13 @@ public class StockifyMapComponent : Verse.MapComponent
     public StockifyNetwork CreateNetwork(string name, CellRect area)
     {
         var network = new StockifyNetwork(name, area);
+        while (Networks.Any(existing => existing.ID == network.ID))
+        {
+            network = new StockifyNetwork(name, area);
+        }
+
         this.Networks.Add(network);
+        RebuildShelfRegistration();
         return network;
     }
 
@@ -58,7 +95,23 @@ public class StockifyMapComponent : Verse.MapComponent
     /// <param name="network">The network to remove.</param>
     public void RemoveNetwork(StockifyNetwork network)
     {
-        this.Networks.Remove(network);
+        if (this.Networks.Remove(network))
+        {
+            foreach (var shelf in network.RegisteredShelves.ToList())
+            {
+                network.UnregisterShelf(shelf);
+            }
+
+            foreach (var localShelf in LocalShelves)
+            {
+                localShelf.SourceNetworkIds.Remove(network.ID);
+                foreach (var request in localShelf.ManualRequests)
+                    request.SourceNetworkIds.Remove(network.ID);
+                localShelf.ManualRequests.RemoveAll(request => request.SourceNetworkIds.Count == 0);
+            }
+
+            RebuildShelfRegistration();
+        }
     }
 
     /// <summary>

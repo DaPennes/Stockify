@@ -33,8 +33,4 @@
     </Reference>
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Remove="WorkbenchPatches.cs" />
-  </ItemGroup>
-
 </Project>

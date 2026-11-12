@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+  <WorkGiverDef>
+    <defName>StockifyReplenishShelf</defName>
+    <label>replenish Stockify shelves</label>
+    <giverClass>Stockify.StockifyWorkGiver</giverClass>
+    <workType>Hauling</workType>
+    <priorityInType>15</priorityInType>
+    <requiredCapacities>
+      <li>Manipulation</li>
+    </requiredCapacities>
+  </WorkGiverDef>
+  <WorkGiverDef>
+    <defName>StockifyGetShelf</defName>
+    <label>deliver requested Stockify materials</label>
+    <giverClass>Stockify.StockifyWorkGiver</giverClass>
+    <workType>Hauling</workType>
+    <priorityInType>15</priorityInType>
+    <requiredCapacities>
+      <li>Manipulation</li>
+    </requiredCapacities>
+  </WorkGiverDef>
+</Defs>

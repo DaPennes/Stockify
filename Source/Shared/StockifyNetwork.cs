@@ -3,12 +3,12 @@ namespace Stockify;
 /// <summary>
 /// Represents a storage network with connected shelves and material inventory.
 /// </summary>
-public class StockifyNetwork
+public class StockifyNetwork : IExposable
 {
     /// <summary>
     /// Gets the unique identifier for this network.
     /// </summary>
-    public int ID { get; }
+    public int ID { get; private set; }
 
     /// <summary>
     /// Gets or sets the network name.
@@ -46,11 +46,18 @@ public class StockifyNetwork
     public bool OutputEnabled { get; set; } = true;
 
     public List<string> IngredientFilters { get; } = new List<string>();
+    public List<int> ExcludedShelfThingIds { get; } = new List<int>();
 
     /// <summary>
     /// Gets or sets the storage priority for this network.
     /// </summary>
     public int StoragePriority { get; set; } = 0;
+
+    public bool AllowsMaterial(Thing thing)
+    {
+        return thing?.def != null &&
+               !IngredientFilters.Contains(thing.def.defName);
+    }
 
     /// <summary>
     /// Gets the material inventory overview for this network.
@@ -67,6 +74,66 @@ public class StockifyNetwork
         this.ID = UnityEngine.Random.Range(100000, 999999);
         this.Name = name;
         this.DesignatedArea = area;
+    }
+
+    public StockifyNetwork() : this("", CellRect.Empty)
+    {
+    }
+
+    public void ExposeData()
+    {
+        var id = ID;
+        var name = Name;
+        var minX = DesignatedArea.minX;
+        var minZ = DesignatedArea.minZ;
+        var maxX = DesignatedArea.maxX;
+        var maxZ = DesignatedArea.maxZ;
+        var getEnabled = GetEnabled;
+        var pullEnabled = PullEnabled;
+        var inputEnabled = InputEnabled;
+        var outputEnabled = OutputEnabled;
+        var storagePriority = StoragePriority;
+        var ingredientFilters = IngredientFilters;
+        var excludedShelfThingIds = ExcludedShelfThingIds;
+
+        Scribe_Values.Look(ref id, "id");
+        Scribe_Values.Look(ref name, "name");
+        Scribe_Values.Look(ref minX, "areaMinX");
+        Scribe_Values.Look(ref minZ, "areaMinZ");
+        Scribe_Values.Look(ref maxX, "areaMaxX");
+        Scribe_Values.Look(ref maxZ, "areaMaxZ");
+        Scribe_Values.Look(ref getEnabled, "getEnabled", true);
+        Scribe_Values.Look(ref pullEnabled, "pullEnabled", true);
+        Scribe_Values.Look(ref inputEnabled, "inputEnabled", true);
+        Scribe_Values.Look(ref outputEnabled, "outputEnabled", true);
+        Scribe_Values.Look(ref storagePriority, "storagePriority");
+        Scribe_Collections.Look(ref ingredientFilters, "ingredientFilters", LookMode.Value);
+        Scribe_Collections.Look(ref excludedShelfThingIds, "excludedShelfThingIds", LookMode.Value);
+
+        if (Scribe.mode == LoadSaveMode.LoadingVars)
+        {
+            ID = id;
+            Name = name ?? "";
+            DesignatedArea = CellRect.FromLimits(minX, minZ, maxX, maxZ);
+            GetEnabled = getEnabled;
+            PullEnabled = pullEnabled;
+            InputEnabled = inputEnabled;
+            OutputEnabled = outputEnabled;
+            StoragePriority = storagePriority;
+            IngredientFilters.Clear();
+            if (ingredientFilters != null)
+            {
+                IngredientFilters.AddRange(ingredientFilters);
+            }
+            ExcludedShelfThingIds.Clear();
+            if (excludedShelfThingIds != null)
+            {
+                ExcludedShelfThingIds.AddRange(excludedShelfThingIds);
+            }
+
+            RegisteredShelves.Clear();
+            MaterialInventory.Clear();
+        }
     }
 
     /// <summary>
@@ -100,8 +167,17 @@ public class StockifyNetwork
     {
         if (map == null) return;
 
+        var networks = map.GetComponent<StockifyMapComponent>()?.Networks;
+        var earlierNetworks = networks == null
+            ? new List<StockifyNetwork>()
+            : networks.TakeWhile(network => network != this).ToList();
         var shelvesInArea = map.listerThings.AllThings
-            .Where(thing => thing is Building_Storage && this.DesignatedArea.Contains(thing.Position))
+            .Where(thing => thing is Building_Storage &&
+                            thing.TryGetComp<CompStockifyShelf>() == null &&
+                            this.DesignatedArea.Contains(thing.Position) &&
+                            !this.ExcludedShelfThingIds.Contains(thing.thingIDNumber) &&
+                            !earlierNetworks.Any(network =>
+                                network.RegisteredShelves.Any(shelf => shelf.Thing == thing)))
             .Select(thing => this.RegisteredShelves.FirstOrDefault(shelf => shelf.Thing == thing)
                 ?? new StockifyShelf(thing))
             .ToList();
@@ -133,115 +209,53 @@ public class StockifyNetwork
             shelf.UpdateStoredItems();
             foreach (var item in shelf.StoredItems)
             {
-                var def = item.def;
-                var label = def.label;
+                if (item?.def == null || item.IsForbidden(Faction.OfPlayer) ||
+                    !AllowsMaterial(item) ||
+                    shelf.Thing is Building_Storage storage &&
+                    storage.GetStoreSettings()?.AllowedToAccept(item) != true)
+                    continue;
 
-                if (!this.MaterialInventory.ContainsKey(label))
+                var def = item.def;
+                var defName = def.defName;
+
+                if (!this.MaterialInventory.ContainsKey(defName))
                 {
-                    this.MaterialInventory[label] = new NetworkMaterialInfo(label);
+                    this.MaterialInventory[defName] = new NetworkMaterialInfo(def);
                 }
 
-                this.MaterialInventory[label].AddItem(item);
+                this.MaterialInventory[defName].AddItem(item);
             }
         }
     }
 
     /// <summary>
-    /// Gets the available quantity of a specific material.
+    /// Gets the stored quantity of a specific material definition.
     /// </summary>
-    /// <param name="materialLabel">The material label.</param>
-    /// <param name="reservedOnly">Whether to count only reserved items.</param>
-    /// <returns>The available quantity.</returns>
-    public int GetAvailableQuantity(string materialLabel, bool reservedOnly = false)
+    /// <param name="materialDefName">The ThingDef defName.</param>
+    /// <returns>The physical quantity stored in this network.</returns>
+    public int GetStoredQuantity(string materialDefName)
     {
-        if (!this.MaterialInventory.ContainsKey(materialLabel))
+        if (!this.MaterialInventory.ContainsKey(materialDefName))
         {
             return 0;
         }
 
-        return reservedOnly
-            ? this.MaterialInventory[materialLabel].ReservedCount
-            : this.MaterialInventory[materialLabel].AvailableCount;
+        return this.MaterialInventory[materialDefName].StoredCount;
     }
 
     /// <summary>
-    /// Gets the total quantity of a specific material (available + reserved).
+    /// Gets the physical quantity of a specific material definition.
     /// </summary>
-    /// <param name="materialLabel">The material label.</param>
-    /// <returns>The total quantity.</returns>
-    public int GetTotalQuantity(string materialLabel)
+    /// <param name="materialDefName">The ThingDef defName.</param>
+    /// <returns>The physical quantity stored in this network.</returns>
+    public int GetTotalQuantity(string materialDefName)
     {
-        if (!this.MaterialInventory.ContainsKey(materialLabel))
+        if (!this.MaterialInventory.ContainsKey(materialDefName))
         {
             return 0;
         }
 
-        return this.MaterialInventory[materialLabel].TotalCount;
+        return this.MaterialInventory[materialDefName].TotalCount;
     }
 
-    /// <summary>
-    /// Attempts to reserve materials for a transfer.
-    /// </summary>
-    /// <param name="materialLabel">The material label.</param>
-    /// <param name="quantity">The quantity to reserve.</param>
-    /// <returns>True if reservation was successful.</returns>
-    public bool TryReserveMaterials(string materialLabel, int quantity)
-    {
-        if (!this.MaterialInventory.ContainsKey(materialLabel))
-        {
-            return false;
-        }
-
-        var info = this.MaterialInventory[materialLabel];
-        return info.TryReserve(quantity);
-    }
-
-    /// <summary>
-    /// Releases a previous material reservation.
-    /// </summary>
-    /// <param name="materialLabel">The material label.</param>
-    /// <param name="quantity">The quantity to release.</param>
-    public void ReleaseReservation(string materialLabel, int quantity)
-    {
-        if (!this.MaterialInventory.ContainsKey(materialLabel))
-        {
-            return;
-        }
-
-        this.MaterialInventory[materialLabel].Release(quantity);
-    }
-
-    /// <summary>
-    /// Performs a transfer of materials from this network.
-    /// </summary>
-    /// <param name="materialLabel">The material label.</param>
-    /// <param name="quantity">The quantity to transfer.</param>
-    /// <param name="sourceShelf">The source shelf.</param>
-    /// <param name="destination">The destination for the transfer.</param>
-    /// <returns>True if the transfer was successful.</returns>
-    public bool TryTransferMaterials(string materialLabel, int quantity, StockifyShelf sourceShelf, StockifyDestination destination)
-    {
-        if (!this.MaterialInventory.ContainsKey(materialLabel))
-        {
-            return false;
-        }
-
-        var info = this.MaterialInventory[materialLabel];
-
-        // Check if we have enough available (non-reserved) materials
-        if (info.AvailableCount < quantity)
-        {
-            return false;
-        }
-
-        // Reserve the materials
-        if (!info.TryReserve(quantity))
-        {
-            return false;
-        }
-
-        // Execute the transfer
-        return sourceShelf.TryTransferToDestination(
-            new StockifyTransferInfo(materialLabel, quantity, this), destination);
-    }
 }

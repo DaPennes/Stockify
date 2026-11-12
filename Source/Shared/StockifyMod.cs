@@ -17,11 +17,6 @@ public class StockifyMod : Verse.Mod
     public StockifyStorageManager StorageManager { get; private set; }
 
     /// <summary>
-    /// Gets or sets the transfer manager.
-    /// </summary>
-    public StockifyTransferManager TransferManager { get; private set; }
-
-    /// <summary>
     /// Gets or sets the designation tool.
     /// </summary>
     private StockifyDesignationTool _designationTool;
@@ -32,7 +27,10 @@ public class StockifyMod : Verse.Mod
     /// <summary>
     /// Gets or sets the main window.
     /// </summary>
-    public StockifyMainWindow MainWindow { get; private set; }
+    private StockifyMainWindow _mainWindow;
+
+    public StockifyMainWindow MainWindow =>
+        _mainWindow ??= new StockifyMainWindow();
 
     /// <summary>
     /// Gets or sets the network component for the current map.
@@ -43,7 +41,5 @@ public class StockifyMod : Verse.Mod
     {
         StockifyMod.Instance = this;
         this.StorageManager = new StockifyStorageManager();
-        this.TransferManager = new StockifyTransferManager();
-        this.MainWindow = new StockifyMainWindow();
     }
 }
