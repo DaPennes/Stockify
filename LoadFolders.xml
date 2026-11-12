@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LoadFolders>
+  <LoadFolder>
+    <Name>Stockify 1.7</Name>
+    <Assemblies>
+      <Assembly>Stockify.dll</Assembly>
+    </Assemblies>
+    <Version>1.7</Version>
+  </LoadFolder>
+  <LoadFolder>
+    <Name>Stockify 1.6</Name>
+    <Assemblies>
+      <Assembly>Stockify.dll</Assembly>
+    </Assemblies>
+    <Version>1.6</Version>
+  </LoadFolder>
+</LoadFolders>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<About>
+  <Name>Stockify</Name>
+  <Description>Intelligent storage network and material management system for RimWorld 1.6 and 1.7.</Description>
+  <Author>Stockify Mod</Author>
+  <Version>1.0.0</Version>
+  <CompatibleWith>
+    <MinVersion>1.6.0</MinVersion>
+    <MaxVersion>1.7.9999</MaxVersion>
+  </CompatibleWith>
+  <LogCategories>
+    <LogCategory>StockifyCore</LogCategory>
+    <LogCategory>StockifyNetwork</LogCategory>
+    <LogCategory>StockifyStorage</LogCategory>
+    <LogCategory>StockifyTransfer</LogCategory>
+  </LogCategories>
+</About>
