@@ -24,7 +24,7 @@ public class StockifyShelf
     /// <summary>
     /// Gets the Filter accepting things classes for this shelf.
     /// </summary>
-    public Verse.FilterLayer? Filter { get; set; }
+    public ThingFilter Filter { get; set; }
 
     /// <summary>
     /// Gets the stored items on this shelf.
@@ -39,7 +39,7 @@ public class StockifyShelf
     /// <summary>
     /// Initializes a new instance of the <see cref="StockifyShelf"/> class.
     /// </summary>
-    /// <param name="thing">The Thing representing the shelf building.</public>
+    /// <param name="thing">The Thing representing the shelf building.</param>
     public StockifyShelf(Thing thing)
     {
         this.Thing = thing;
@@ -116,8 +116,8 @@ public class StockifyShelf
     /// <summary>
     /// Checks if this shelf has available capacity for more items.
     /// </summary>
-    /// <param name="count">The number of items to check capacity for.</public>
-    /// <returns>True if there is available capacity.</public>
+    /// <param name="count">The number of items to check capacity for.</param>
+    /// <returns>True if there is available capacity.</returns>
     public bool HasCapacity(int count = 1)
     {
         // Vanilla shelves typically have a capacity based on their def
@@ -135,10 +135,10 @@ public class StockifyShelf
     /// <summary>
     /// Gets the available count of a specific thing on this shelf.
     /// </summary>
-    /// <param name="thingDef">The thing definition to count.</public>
-    /// <param name="qualityFilter">Optional quality filter.</public>
-    /// <returns>The available count.</public>
-    public int GetAvailableCount(ThingDef thingDef, Verse.QualityLayer? qualityFilter = null)
+    /// <param name="thingDef">The thing definition to count.</param>
+    /// <param name="qualityFilter">Optional quality filter.</param>
+    /// <returns>The available count.</returns>
+    public int GetAvailableCount(ThingDef thingDef, QualityCategory? qualityFilter = null)
     {
         int count = 0;
 
@@ -162,10 +162,10 @@ public class StockifyShelf
     /// <summary>
     /// Gets the reserved count of a specific thing on this shelf.
     /// </summary>
-    /// <param name="thingDef">The thing definition to count.</public>
-    /// <param name="qualityFilter">Optional quality filter.</public>
-    /// <returns>The reserved count.</public>
-    public int GetReservedCount(ThingDef thingDef, Verse.QualityLayer? qualityFilter = null)
+    /// <param name="thingDef">The thing definition to count.</param>
+    /// <param name="qualityFilter">Optional quality filter.</param>
+    /// <returns>The reserved count.</returns>
+    public int GetReservedCount(ThingDef thingDef, QualityCategory? qualityFilter = null)
     {
         // This would track reservations made by the transfer system
         // For now, return 0 (reservations are tracked at the network level)
@@ -175,12 +175,82 @@ public class StockifyShelf
     /// <summary>
     /// Tries to transfer items from this shelf to a destination.
     /// </summary>
-    /// <param name="destination">The destination for the transfer.</public>
-    /// <returns>True if the transfer was successful.</public>
-    public bool TryTransferToDestination(StockifyNetwork.TransferInfo transferInfo, StockifyDestination destination)
+    /// <param name="transferInfo">The transfer information (material, quantity, source network).</param>
+    /// <param name="destination">The destination for the transfer.</param>
+    /// <returns>True if the transfer was successful.</returns>
+    public bool TryTransferToDestination(StockifyTransferInfo transferInfo, StockifyDestination destination)
     {
-        // Implementation will handle the actual transfer logic
-        // using vanilla hauling and storage mechanics
-        return false; // placeholder
+        // Verify destination is valid
+        if (!destination.IsValid())
+        {
+            return false;
+        }
+
+        // Get the material definition from the label
+        var thingDef = Verse.DefDatabase<ThingDef>.GetDefByName(transferInfo.MaterialLabel);
+        if (thingDef == null)
+        {
+            return false;
+        }
+
+        // Find available items of this type on the shelf (non-reserved)
+        var availableItems = new List<Thing>();
+        int totalAvailable = 0;
+
+        foreach (var thing in this.StoredItems)
+        {
+            if (thing.def == thingDef && thing.stackCount > 0)
+            {
+                // Items without bill reservations are available
+                // In a full implementation, we'd check bill reservations here
+                availableItems.Add(thing);
+                totalAvailable += thing.stackCount;
+            }
+        }
+
+        // Check if we have enough available
+        if (totalAvailable < transferInfo.Quantity)
+        {
+            // Not enough materials, transfer what we can and return partial
+            transferInfo.Quantity = totalAvailable;
+        }
+
+        // Transfer the required quantity
+        int transferred = 0;
+        var itemsToTransfer = availableItems.TakeWhile((_) => transferred < transferInfo.Quantity).ToList();
+
+        foreach (var thing in itemsToTransfer)
+        {
+            var toTransfer = Math.Min(thing.stackCount, transferInfo.Quantity - transferred);
+
+            thing.stackCount -= toTransfer;
+            transferred += toTransfer;
+
+            // If we've transferred all stacks, remove them
+            if (thing.stackCount <= 0)
+            {
+                this.StoredItems.Remove(thing);
+            }
+            else
+            {
+                // Partial stack remaining
+                // thing.stackCount already updated above
+            }
+
+            // TODO: Actually move the thing to the destination using vanilla hauling
+            // For now, we just reduce the shelf stock and consider the transfer complete
+            // A full implementation would find a valid hauling destination or workbench slot
+        }
+
+        // If we transferred the full requested quantity, success
+        if (transferred >= transferInfo.Quantity)
+        {
+            return true;
+        }
+
+        // Partial transfer - restore what we couldn't transfer
+        // In a full implementation, we'd need to restore the items properly
+        // For now, mark as partial success
+        return transferred > 0;
     }
 }

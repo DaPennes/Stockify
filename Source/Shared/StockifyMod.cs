@@ -36,37 +36,12 @@ public class StockifyMod : Verse.Mod
     /// </summary>
     public StockifyMapComponent MapComponent { get; private set; }
 
-    /// <summary>
-    /// Initializes the mod.
-    /// </summary>
-    /// <param name="content">The mod content.</param>
-    public override void Init()
+    public StockifyMod(Verse.ModContentPack content) : base(content)
     {
         StockifyMod.Instance = this;
         this.StorageManager = new StockifyStorageManager();
         this.TransferManager = new StockifyTransferManager();
         this.DesignationTool = new StockifyDesignationTool();
-        this.MapComponent = Find.WorldObjects.TryGetComponent<StockifyMapComponent>();
-
-        if (this.MapComponent == null)
-        {
-            this.MapComponent = new StockifyMapComponent();
-            Find.WorldObjects.components.Add(this.MapComponent);
-        }
-
         this.MainWindow = new StockifyMainWindow();
-        base.Init();
-    }
-
-    /// <summary>
-    /// Called when the world is loading.
-    /// </summary>
-    public override void ExposeData()
-    {
-        base.ExposeData();
-        Scribe.Look(this.StorageManager, "storage_manager");
-        Scribe.Look(this.TransferManager, "transfer_manager");
-        Scribe.Look(this.DesignationTool, "designation_tool");
-        Scribe.Look(this.MainWindow, "main_window");
     }
 }

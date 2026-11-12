@@ -23,10 +23,9 @@ public class StockifyMapComponent : Verse.MapComponent
     /// <summary>
     /// Called when the map is created.
     /// </summary>
-    public override void MapInitialized()
+    public override void FinalizeInit()
     {
-        base.MapInitialized();
-        this.NETworks.Clear();
+        base.FinalizeInit();
         this.RebuildShelfRegistration();
     }
 
@@ -66,8 +65,7 @@ public class StockifyMapComponent : Verse.MapComponent
     /// Gets a network by its unique ID.
     /// </summary>
     /// <param name="id">The network unique identifier.</param>
-    /// <returns>The network, or null if not found.</public>
-</summary>
+    /// <returns>The network, or null if not found.</returns>
     public StockifyNetwork GetNetworkByID(int id)
     {
         return this.NETworks.FirstOrDefault(n => n.ID == id);

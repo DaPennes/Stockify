@@ -14,11 +14,11 @@ public class StockifyTransferManager
     /// <summary>
     /// Creates a new transfer request for materials.
     /// </summary>
-    /// <param name="materialLabel">The material label to transfer.</public>
-    /// <param name="quantity">The quantity to transfer.</public>
-    /// <param name="sourceShelf">The source shelf.</public>
-    /// <param name="destination">The destination for the transfer.</public>
-    /// <returns>The transfer request, or null if creation failed.</public>
+    /// <param name="materialLabel">The material label to transfer.</param>
+    /// <param name="quantity">The quantity to transfer.</param>
+    /// <param name="sourceShelf">The source shelf.</param>
+    /// <param name="destination">The destination for the transfer.</param>
+    /// <returns>The transfer request, or null if creation failed.</returns>
     public TransferRequest CreateTransferRequest(string materialLabel, int quantity, StockifyShelf sourceShelf, StockifyDestination destination)
     {
         // Check if we have enough available materials
@@ -82,8 +82,8 @@ public class StockifyTransferManager
     /// <summary>
     /// Tries to complete a single transfer request.
     /// </summary>
-    /// <param name="request">The transfer request.</public>
-    /// <returns>True if the transfer was completed successfully.</public>
+    /// <param name="request">The transfer request.</param>
+    /// <returns>True if the transfer was completed successfully.</returns>
     private bool TryCompleteTransfer(TransferRequest request)
     {
         // Find the source shelf's items
@@ -137,7 +137,7 @@ public class StockifyTransferManager
     /// <summary>
     /// Rolls back a transfer request, releasing any reservations.
     /// </summary>
-    /// <param name="request">The transfer request to rollback.</public>
+    /// <param name="request">The transfer request to rollback.</param>
     public void RollbackTransfer(TransferRequest request)
     {
         if (request != null && request.SourceShelf != null)
@@ -151,7 +151,7 @@ public class StockifyTransferManager
     /// <summary>
     /// Cancels a specific transfer request.
     /// </summary>
-    /// <param name="request">The transfer request to cancel.</public>
+    /// <param name="request">The transfer request to cancel.</param>
     public void CancelTransfer(TransferRequest request)
     {
         if (request != null)

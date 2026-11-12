@@ -1,0 +1,6 @@
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Shared\obj\Release\net10.0\Stockify.Shared.GeneratedMSBuildEditorConfig.editorconfig
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Shared\obj\Release\net10.0\Stockify.Shared.AssemblyInfoInputs.cache
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Shared\obj\Release\net10.0\Stockify.Shared.AssemblyInfo.cs
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Shared\obj\Release\net10.0\Stockify.Shared.csproj.CoreCompileInputs.cache
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Shared\obj\Release\net10.0\Stockify.Shared.sourcelink.json
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Shared\obj\Release\net10.0\Stockify.Shared.csproj.AssemblyReference.cache

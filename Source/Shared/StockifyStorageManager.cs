@@ -9,9 +9,9 @@ public class StockifyStorageManager
     /// <summary>
     /// Detects eligible shelves within a designated area.
     /// </summary>
-    /// <param name="area">The area to scan for shelves.</public>
-    /// <param name="map">The map to scan on.</public>
-    /// <returns>A list of eligible shelves found in the area.</public>
+    /// <param name="area">The area to scan for shelves.</param>
+    /// <param name="map">The map to scan on.</param>
+    /// <returns>A list of eligible shelves found in the area.</returns>
     public List<StockifyShelf> DetectShelvesInArea(CellRect area, Verse.Map map)
     {
         var shelves = new List<StockifyShelf>();
@@ -36,11 +36,11 @@ public class StockifyStorageManager
     /// <summary>
     /// Finds the best source shelf for retrieving materials.
     /// </summary>
-    /// <param name="materialLabel">The material label to find.</public>
-    /// <param name="network">The network to search.</public>
-    /// <param name="selectionMode">The selection mode to use.</public>
-    /// <param name="excludedShelves">Shelves to exclude from selection.</public>
-    /// <returns>The best source shelf, or null if none found.</public>
+    /// <param name="materialLabel">The material label to find.</param>
+    /// <param name="network">The network to search.</param>
+    /// <param name="selectionMode">The selection mode to use.</param>
+    /// <param name="excludedShelves">Shelves to exclude from selection.</param>
+    /// <returns>The best source shelf, or null if none found.</returns>
     public StockifyShelf FindBestSourceShelf(string materialLabel, StockifyNetwork network,
         StockifySelectionMode selectionMode, List<StockifyShelf> excludedShelves = null)
     {
@@ -99,11 +99,11 @@ public class StockifyStorageManager
     /// <summary>
     /// Finds the best destination shelf for storing materials.
     /// </summary>
-    /// <param name="materialLabel">The material label to store.</public>
-    /// <param name="network">The target network.</public>
-    /// <param name="itemCount">The number of items to store.</public>
-    /// <param name="selectionMode">The selection mode to use.</public>
-    /// <returns>The best destination shelf, or null if none found.</public>
+    /// <param name="materialLabel">The material label to store.</param>
+    /// <param name="network">The target network.</param>
+    /// <param name="itemCount">The number of items to store.</param>
+    /// <param name="selectionMode">The selection mode to use.</param>
+    /// <returns>The best destination shelf, or null if none found.</returns>
     public StockifyShelf FindBestDestinationShelf(string materialLabel, StockifyNetwork network,
         int itemCount, StockifySelectionMode selectionMode)
     {
@@ -156,10 +156,10 @@ public class StockifyStorageManager
     /// <summary>
     /// Calculates the selection score for source shelf selection.
     /// </summary>
-    /// <param name="shelf">The shelf to score.</public>
-    /// <param name="materialLabel">The material label.</public>
-    /// <param name="mode">The selection mode.</public>
-    /// <returns>The selection score.</public>
+    /// <param name="shelf">The shelf to score.</param>
+    /// <param name="materialLabel">The material label.</param>
+    /// <param name="mode">The selection mode.</param>
+    /// <returns>The selection score.</returns>
     private int CalculateSelectionScore(StockifyShelf shelf, string materialLabel, StockifySelectionMode mode)
     {
         var score = 0;
@@ -177,10 +177,10 @@ public class StockifyStorageManager
     /// <summary>
     /// Calculates the selection score for destination shelf selection.
     /// </summary>
-    /// <param name="shelf">The shelf to score.</public>
-    /// <param name="materialLabel">The material label.</public>
-    /// <param name="mode">The selection mode.</public>
-    /// <returns>The selection score.</public>
+    /// <param name="shelf">The shelf to score.</param>
+    /// <param name="materialLabel">The material label.</param>
+    /// <param name="mode">The selection mode.</param>
+    /// <returns>The selection score.</returns>
     private int CalculateDestinationSelectionScore(StockifyShelf shelf, string materialLabel, StockifySelectionMode mode)
     {
         var score = 0;
@@ -198,11 +198,11 @@ public class StockifyStorageManager
     /// <summary>
     /// Determines if a balanced score is better than the current best.
     /// </summary>
-    /// <param name="newScore">The new score.</public>
-    /// <param name="currentBest">The current best score.</public>
-    /// <param name="newDistance">The new shelf's distance.</public>
-    /// <param name="currentDistance">The current best shelf's distance.</public>
-    /// <returns>True if the new score is better.</public>
+    /// <param name="newScore">The new score.</param>
+    /// <param name="currentBest">The current best score.</param>
+    /// <param name="newDistance">The new shelf's distance.</param>
+    /// <param name="currentDistance">The current best shelf's distance.</param>
+    /// <returns>True if the new score is better.</returns>
     private bool IsBetterBalancedScore(int newScore, int currentBest, int newDistance, int currentDistance)
     {
         // Balanced: prefer higher priority and available capacity, but distance matters too

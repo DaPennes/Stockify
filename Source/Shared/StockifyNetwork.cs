@@ -59,7 +59,7 @@ public class StockifyNetwork
     /// Initializes a new instance of the <see cref="StockifyNetwork"/> class.
     /// </summary>
     /// <param name="name">The network name.</param>
-    /// <param name="area">The designated area.</public>
+    /// <param name="area">The designated area.</param>
     public StockifyNetwork(string name, CellRect area)
     {
         this.ID = UnityEngine.Random.Range(100000, 999999);
@@ -70,7 +70,7 @@ public class StockifyNetwork
     /// <summary>
     /// Registers a shelf into this network.
     /// </summary>
-    /// <param name="shelf">The shelf to register.</public>
+    /// <param name="shelf">The shelf to register.</param>
     public void RegisterShelf(StockifyShelf shelf)
     {
         if (!this.RegisteredShelves.Contains(shelf))
@@ -83,7 +83,7 @@ public class StockifyNetwork
     /// <summary>
     /// Unregisters a shelf from this network.
     /// </summary>
-    /// <param name="shelf">The shelf to unregister.</public>
+    /// <param name="shelf">The shelf to unregister.</param>
     public void UnregisterShelf(StockifyShelf shelf)
     {
         this.RegisteredShelves.Remove(shelf);
@@ -118,9 +118,9 @@ public class StockifyNetwork
     /// <summary>
     /// Gets the available quantity of a specific material.
     /// </summary>
-    /// <param name="materialLabel">The material label.</public>
-    /// <param name="reservedOnly">Whether to count only reserved items.</public>
-    /// <returns>The available quantity.</public>
+    /// <param name="materialLabel">The material label.</param>
+    /// <param name="reservedOnly">Whether to count only reserved items.</param>
+    /// <returns>The available quantity.</returns>
     public int GetAvailableQuantity(string materialLabel, bool reservedOnly = false)
     {
         if (!this.MaterialInventory.ContainsKey(materialLabel))
@@ -136,8 +136,8 @@ public class StockifyNetwork
     /// <summary>
     /// Gets the total quantity of a specific material (available + reserved).
     /// </summary>
-    /// <param name="materialLabel">The material label.</public>
-    /// <returns>The total quantity.</public>
+    /// <param name="materialLabel">The material label.</param>
+    /// <returns>The total quantity.</returns>
     public int GetTotalQuantity(string materialLabel)
     {
         if (!this.MaterialInventory.ContainsKey(materialLabel))
@@ -151,9 +151,9 @@ public class StockifyNetwork
     /// <summary>
     /// Attempts to reserve materials for a transfer.
     /// </summary>
-    /// <param name="materialLabel">The material label.</public>
-    /// <param name="quantity">The quantity to reserve.</public>
-    /// <returns>True if reservation was successful.</public>
+    /// <param name="materialLabel">The material label.</param>
+    /// <param name="quantity">The quantity to reserve.</param>
+    /// <returns>True if reservation was successful.</returns>
     public bool TryReserveMaterials(string materialLabel, int quantity)
     {
         if (!this.MaterialInventory.ContainsKey(materialLabel))
@@ -168,8 +168,8 @@ public class StockifyNetwork
     /// <summary>
     /// Releases a previous material reservation.
     /// </summary>
-    /// <param name="materialLabel">The material label.</public>
-    /// <param name="quantity">The quantity to release.</public>
+    /// <param name="materialLabel">The material label.</param>
+    /// <param name="quantity">The quantity to release.</param>
     public void ReleaseReservation(string materialLabel, int quantity)
     {
         if (!this.MaterialInventory.ContainsKey(materialLabel))
@@ -183,11 +183,11 @@ public class StockifyNetwork
     /// <summary>
     /// Performs a transfer of materials from this network.
     /// </summary>
-    /// <param name="materialLabel">The material label.</public>
-    /// <param name="quantity">The quantity to transfer.</public>
-    /// <param name="sourceShelf">The source shelf.</public>
-    /// <param name="destination">The destination for the transfer.</public>
-    /// <returns>True if the transfer was successful.</public>
+    /// <param name="materialLabel">The material label.</param>
+    /// <param name="quantity">The quantity to transfer.</param>
+    /// <param name="sourceShelf">The source shelf.</param>
+    /// <param name="destination">The destination for the transfer.</param>
+    /// <returns>True if the transfer was successful.</returns>
     public bool TryTransferMaterials(string materialLabel, int quantity, StockifyShelf sourceShelf, StockifyDestination destination)
     {
         if (!this.MaterialInventory.ContainsKey(materialLabel))
