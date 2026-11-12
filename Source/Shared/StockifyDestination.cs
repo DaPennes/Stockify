@@ -11,6 +11,10 @@ public class StockifyDestination
     /// </summary>
     public Thing Thing { get; }
 
+    public Map Map { get; }
+
+    public IntVec3 Position { get; }
+
     /// <summary>
     /// The label/name of the destination.
     /// </summary>
@@ -28,8 +32,17 @@ public class StockifyDestination
     public StockifyDestination(Thing thing)
     {
         this.Thing = thing;
+        this.Map = thing?.Map;
+        this.Position = thing?.Position ?? IntVec3.Invalid;
         this.Label = thing?.Label ?? "Unknown Destination";
         this.Network = null;
+    }
+
+    public StockifyDestination(Map map, IntVec3 position, string label = "Map location")
+    {
+        this.Map = map;
+        this.Position = position;
+        this.Label = label;
     }
 
     /// <summary>
@@ -39,6 +52,8 @@ public class StockifyDestination
     public StockifyDestination(StockifyShelf shelf)
     {
         this.Thing = shelf.Thing;
+        this.Map = shelf.Thing.Map;
+        this.Position = shelf.Thing.Position;
         this.Label = shelf.Thing.Label;
         this.Network = shelf.Network;
     }
@@ -58,6 +73,6 @@ public class StockifyDestination
     /// <returns>True if the destination is valid.</returns>
     public bool IsValid()
     {
-        return Thing != null && Thing.DestroyedOrNull() == false;
+        return Map != null && Position.InBounds(Map) && (Thing == null || !Thing.Destroyed);
     }
 }

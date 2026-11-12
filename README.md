@@ -63,9 +63,11 @@ Stockify is an intelligent storage network and quality-of-life mod that connects
 - **RimWorld 1.6**: net472 target framework, Harmony 2
 
 ## Building from Source
-- Requires Visual Studio 2022 or .NET 8 SDK
-- Solution file: Stockify.sln
-- Build targets in Source/Shared (shared code) and Source/Compatibility/V1_6/V1_7 (version-specific)
+- Requires the .NET SDK and the RimWorld assemblies for the target game version.
+- Build RimWorld 1.7 with `dotnet build Source/Compatibility/V1_7/Stockify.V1_7.csproj`.
+- Build RimWorld 1.6 with `dotnet build Source/Compatibility/V1_6/Stockify.V1_6.csproj`.
+- Set the `RimWorldDir` MSBuild property if the game files are not in the default Steam installation path.
+- The mod DLLs are written to `1.7/Assemblies` and `1.6/Assemblies`, respectively.
 
 ## Known Limitations
 - Mod only works with vanilla shelves; modded storage buildings require compatible APIs

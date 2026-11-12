@@ -18,12 +18,12 @@ public static class StockifyOutputManager
         if (sourceShelf == null)
         {
             var map = thing.Map;
-            var mapComponent = Find.WorldObjects.GetComponent<StockifyMapComponent>();
+            var mapComponent = map?.GetComponent<StockifyMapComponent>();
 
             if (mapComponent != null)
             {
                 // Try each network's output-enabled shelves
-                foreach (var network in mapComponent.NETworks.Where(n => n.OutputEnabled))
+                foreach (var network in mapComponent.Networks.Where(n => n.OutputEnabled))
                 {
                     var shelf = FindBestOutputShelf(network, thing.def);
                     if (shelf != null)
@@ -38,8 +38,8 @@ public static class StockifyOutputManager
         }
 
         // If we have a specific shelf, check if it belongs to an output-enabled network
-        var network = sourceShelf.Network;
-        if (network != null && network.OutputEnabled)
+        var sourceNetwork = sourceShelf.Network;
+        if (sourceNetwork != null && sourceNetwork.OutputEnabled)
         {
             // Check if the shelf has the thing
             if (sourceShelf.StoredItems.Contains(thing) || HasThingOnShelf(sourceShelf, thing.def))

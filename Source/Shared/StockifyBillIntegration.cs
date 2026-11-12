@@ -61,18 +61,20 @@ public class StockifyBillIntegration
     {
         var requirements = new List<IngredientRequirement>();
 
-        if (bill.def == null || bill.def.ingredients == null) return requirements;
+        var recipe = bill?.recipe;
+        if (recipe?.ingredients == null) return requirements;
 
-        foreach (var ingredient in bill.def.ingredients)
+        foreach (var ingredient in recipe.ingredients)
         {
-            var count = ingredientCount(ingredient);
-            if (count > 0)
+            var thingDef = ingredient.FixedIngredient ?? ingredient.filter?.AllowedThingDefs.FirstOrDefault();
+            var count = ingredient.CountRequiredOfFor(thingDef, recipe, bill);
+            if (thingDef != null && count > 0)
             {
                 requirements.Add(new IngredientRequirement
                 {
-                    thingDef = ingredient.thingDef,
+                    thingDef = thingDef,
                     count = count,
-                    qualityRequired = ingredient.filter?.quality ?? QualityCategory.Normal
+                    qualityRequired = QualityCategory.Awful
                 });
             }
         }
@@ -85,16 +87,6 @@ public class StockifyBillIntegration
     /// </summary>
     /// <paramname="ingredients">The ingredient list from a bill.</param>
     /// <returns>Total count.</returns>
-    private static int ingredientCount(IngredientCount ingredient)
-    {
-        if (ingredient.Count >= 1)
-        {
-            return ingredient.Count;
-        }
-        // For bill-level settings, return a reasonable default
-        return 1;
-    }
-
     /// <summary>
     /// Attempts to satisfy ingredient requirements from Stockify networks.
     /// </summary>
@@ -114,7 +106,7 @@ public class StockifyBillIntegration
         if (requirements.Count == 0) return true; // No Stockify-dependent ingredients
 
         var map = workbench.Map;
-        var mapComponent = Find.WorldObjects.GetComponent<StockifyMapComponent>();
+        var mapComponent = map?.GetComponent<StockifyMapComponent>();
 
         if (mapComponent == null) return false;
 
@@ -124,7 +116,7 @@ public class StockifyBillIntegration
             // Find eligible networks (those with PULL enabled and input enabled)
             var eligibleNetworks = new List<StockifyNetwork>();
 
-            foreach (var network in mapComponent.NETworks)
+            foreach (var network in mapComponent.Networks)
             {
                 if (!network.PullEnabled) continue;
 

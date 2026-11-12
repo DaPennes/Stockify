@@ -1,8 +1,7 @@
 {
   "version": 4,
   "targets": {
-    "net472": {},
-    "net472/win-x86": {}
+    "net472": {}
   },
   "libraries": {},
   "projectFileDependencyGroups": {
@@ -15,11 +14,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\Stockify\\Source\\Compatibility\\V1_6\\Stockify.V1_6.csproj",
+      "projectUniqueName": "c:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\Stockify\\Source\\Compatibility\\V1_6\\Stockify.V1_6.csproj",
       "projectName": "Stockify",
-      "projectPath": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\Stockify\\Source\\Compatibility\\V1_6\\Stockify.V1_6.csproj",
+      "projectPath": "c:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\Stockify\\Source\\Compatibility\\V1_6\\Stockify.V1_6.csproj",
       "packagesPath": "C:\\Users\\edria\\.nuget\\packages\\",
-      "outputPath": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\Stockify\\Source\\Compatibility\\V1_6\\obj\\",
+      "outputPath": "c:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\Stockify\\Source\\Compatibility\\V1_6\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -60,11 +59,6 @@
         "framework": "net472",
         "targetAlias": "net472",
         "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.403\\RuntimeIdentifierGraph.json"
-      }
-    },
-    "runtimes": {
-      "win-x86": {
-        "#import": []
       }
     }
   }

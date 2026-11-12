@@ -16,6 +16,8 @@ public class StockifyShelf
     /// </summary>
     public int ShelfID { get; }
 
+    public StockifyNetwork Network { get; internal set; }
+
     /// <summary>
     /// Gets the storage priority of this shelf.
     /// </summary>
@@ -34,7 +36,11 @@ public class StockifyShelf
     /// <summary>
     /// Gets the cell rect that this shelf occupies.
     /// </summary>
-    public CellRect OccupiedRect => this.Thing.Position.GetThingList(this.Thing.Map).OfType<Thing>().Select(t => t.Position).Aggregate((a, b) => CellRect.MinMax(a, b));
+    public CellRect OccupiedRect => this.Thing is Building_Storage storage
+        ? CellRect.FromCellList(storage.AllSlotCells())
+        : CellRect.SingleCell(this.Thing.Position);
+
+    public bool IsCompatibleShelf => this.Thing is Building_Storage;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="StockifyShelf"/> class.
@@ -43,38 +49,10 @@ public class StockifyShelf
     public StockifyShelf(Thing thing)
     {
         this.Thing = thing;
-        this.ShelfID = thing.thingID;
-
-        // Try to detect storage compatibility using vanilla APIs
-        this.DetectStorageCompatibility();
-    }
-
-    /// <summary>
-    /// Detects storage compatibility using RimWorld's storage APIs.
-    /// </summary>
-    private void DetectStorageCompatibility()
-    {
-        // Check if this thing has a storage compartment
-        var comp = this.Thing.TryGetComp<Verse.CompStoraging>();
-        if (comp != null)
-        {
-            // This is a storage-enabled building
-            // Read the filter if available
-            var filterComp = this.Thing.TryGetComp<Verse.CompForcedWin>(); // placeholder
-
-            // Try to get slot group for storage priority
-            var slotGroup = this.Thing.TryGetComp<Verse.CompSlotGroup>(); // placeholder
-
-            // Store compatibility info
-            this.StoragePriority = 0; // default
-        }
-
-        // Also check for ThingOwner which contains stored items
-        var thingOwner = this.Thing.TryGetComp<Verse.CompThingOwner>(); // placeholder
-        if (thingOwner != null && thingOwner.HasStoredThings)
-        {
-            // This building stores things
-        }
+        this.ShelfID = thing.thingIDNumber;
+        this.Filter = (thing as Building_Storage)?.GetStoreSettings()?.filter;
+        this.StoragePriority = 0;
+        this.UpdateStoredItems();
     }
 
     /// <summary>
@@ -85,29 +63,17 @@ public class StockifyShelf
     {
         this.StoredItems.Clear();
 
-        // Get stored things from the building's comp
-        var storageComp = this.Thing.TryGetComp<Verse.CompStoraging>();
-        if (storageComp != null && storageComp.StoredThings != null)
+        if (this.Thing is Building_Storage storage)
         {
-            foreach (var thing in storageComp.StoredThings)
+            var slotGroup = storage.GetSlotGroup();
+            if (slotGroup != null)
             {
-                // Only add if still valid and on the same map
-                if (thing != null && thing.Map == this.Thing.Map)
+                foreach (var thing in slotGroup.HeldThings)
                 {
-                    this.StoredItems.Add(thing);
-                }
-            }
-        }
-
-        // Also check direct thingOwner
-        var thingOwner = this.Thing.TryGetComp<Verse.CompThingOwner>();
-        if (thingOwner != null && thingOwner.InnerList != null)
-        {
-            foreach (var thing in thingOwner.InnerList)
-            {
-                if (thing != null && thing.Map == this.Thing.Map)
-                {
-                    this.StoredItems.Add(thing);
+                    if (thing != null && !thing.Destroyed)
+                    {
+                        this.StoredItems.Add(thing);
+                    }
                 }
             }
         }
@@ -120,16 +86,12 @@ public class StockifyShelf
     /// <returns>True if there is available capacity.</returns>
     public bool HasCapacity(int count = 1)
     {
-        // Vanilla shelves typically have a capacity based on their def
-        var storageComp = this.Thing.TryGetComp<Verse.CompStoraging>();
-        if (storageComp != null && storageComp.HasCapacity)
-        {
-            // Return based on available slots vs stored count
-            return storageComp.StoredThings.Count < storageComp.MaximumStoredThings;
-        }
+        if (count < 0 || this.Thing is not Building_Storage storage) return false;
+        var slotGroup = storage.GetSlotGroup();
+        if (slotGroup == null) return false;
 
-        // Default: assume shelf has capacity if it's a valid storage building
-        return this.StoredItems.Count < 50; // reasonable default
+        var maxItems = Math.Max(1, storage.def.building.maxItemsInCell) * slotGroup.CellsList.Count;
+        return slotGroup.HeldThingsCount + count <= maxItems;
     }
 
     /// <summary>
@@ -147,7 +109,8 @@ public class StockifyShelf
             if (thing.def == thingDef)
             {
                 // Apply quality filter if specified
-                if (qualityFilter.HasValue && thing.quality != qualityFilter.Value)
+                var quality = thing.TryGetComp<CompQuality>()?.Quality;
+                if (qualityFilter.HasValue && quality != qualityFilter.Value)
                 {
                     continue;
                 }
@@ -187,7 +150,8 @@ public class StockifyShelf
         }
 
         // Get the material definition from the label
-        var thingDef = Verse.DefDatabase<ThingDef>.GetDefByName(transferInfo.MaterialLabel);
+        var thingDef = DefDatabase<ThingDef>.AllDefsListForReading
+            .FirstOrDefault(def => def.label == transferInfo.MaterialLabel);
         if (thingDef == null)
         {
             return false;
@@ -215,42 +179,27 @@ public class StockifyShelf
             transferInfo.Quantity = totalAvailable;
         }
 
-        // Transfer the required quantity
-        int transferred = 0;
-        var itemsToTransfer = availableItems.TakeWhile((_) => transferred < transferInfo.Quantity).ToList();
+        if (transferInfo.Quantity <= 0) return false;
 
-        foreach (var thing in itemsToTransfer)
+        var transferred = 0;
+        foreach (var thing in availableItems)
         {
             var toTransfer = Math.Min(thing.stackCount, transferInfo.Quantity - transferred);
+            var split = thing.SplitOff(toTransfer);
+            var placed = GenPlace.TryPlaceThing(
+                split, destination.Position, destination.Map, ThingPlaceMode.Near);
+            if (!placed)
+            {
+                GenPlace.TryPlaceThing(split, this.Thing.Position, this.Thing.Map, ThingPlaceMode.Near);
+                break;
+            }
 
-            thing.stackCount -= toTransfer;
             transferred += toTransfer;
-
-            // If we've transferred all stacks, remove them
-            if (thing.stackCount <= 0)
-            {
-                this.StoredItems.Remove(thing);
-            }
-            else
-            {
-                // Partial stack remaining
-                // thing.stackCount already updated above
-            }
-
-            // TODO: Actually move the thing to the destination using vanilla hauling
-            // For now, we just reduce the shelf stock and consider the transfer complete
-            // A full implementation would find a valid hauling destination or workbench slot
+            if (transferred >= transferInfo.Quantity) break;
         }
 
-        // If we transferred the full requested quantity, success
-        if (transferred >= transferInfo.Quantity)
-        {
-            return true;
-        }
-
-        // Partial transfer - restore what we couldn't transfer
-        // In a full implementation, we'd need to restore the items properly
-        // For now, mark as partial success
-        return transferred > 0;
+        this.UpdateStoredItems();
+        this.Network?.UpdateMaterialInventory();
+        return transferred == transferInfo.Quantity;
     }
 }

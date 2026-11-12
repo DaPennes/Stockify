@@ -4,3 +4,10 @@ C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Shar
 C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Shared\obj\Debug\net10.0\Stockify.Shared.csproj.CoreCompileInputs.cache
 C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Shared\obj\Debug\net10.0\Stockify.Shared.sourcelink.json
 C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Shared\obj\Debug\net10.0\Stockify.Shared.csproj.AssemblyReference.cache
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\1.7\Assemblies\net10.0\Stockify.deps.json
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\1.7\Assemblies\net10.0\Stockify.dll
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\1.7\Assemblies\net10.0\Stockify.pdb
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Shared\obj\Debug\net10.0\Stockify.dll
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Shared\obj\Debug\net10.0\refint\Stockify.dll
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Shared\obj\Debug\net10.0\Stockify.pdb
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Shared\obj\Debug\net10.0\ref\Stockify.dll

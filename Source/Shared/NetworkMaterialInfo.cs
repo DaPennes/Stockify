@@ -9,7 +9,7 @@ public class NetworkMaterialInfo
     /// <summary>
     /// The material label/def name.
     /// </summary>
-    public string Label { get; }
+    public string Label { get; private set; }
 
     /// <summary>
     /// Available (non-reserved) count.
@@ -58,6 +58,15 @@ public class NetworkMaterialInfo
         // Increment counts
         this.AvailableCount += thing.stackCount;
         this.TotalCount += thing.stackCount;
+    }
+
+    public void AddItem(ThingDef thingDef, int stackCount)
+    {
+        if (thingDef == null || stackCount <= 0) return;
+
+        this.Label = thingDef.label;
+        this.AvailableCount += stackCount;
+        this.TotalCount += stackCount;
     }
 
     /// <summary>

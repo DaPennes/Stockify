@@ -48,11 +48,25 @@ public class StockifySettings : Verse.ModSettings
     public override void ExposeData()
     {
         base.ExposeData();
-        Scribe.Look(ref PullEnabledGlobally, "pull_enabled_globally");
-        Scribe.Look(ref DefaultSourcePriority, "default_source_priority");
-        Scribe.Look(ref RespectIngredientFilters, "respect_ingredient_filters");
-        Scribe.Look(ref RespectQualityRequirements, "respect_quality_requirements");
-        Scribe.Look(ref MaxAutomaticTransferDistance, "max_automatic_transfer_distance");
-        Scribe.Look(ref UseBalancedSourceSelection, "use_balanced_source_selection");
+        var pullEnabledGlobally = PullEnabledGlobally;
+        var defaultSourcePriority = DefaultSourcePriority;
+        var respectIngredientFilters = RespectIngredientFilters;
+        var respectQualityRequirements = RespectQualityRequirements;
+        var maxAutomaticTransferDistance = MaxAutomaticTransferDistance;
+        var useBalancedSourceSelection = UseBalancedSourceSelection;
+
+        Scribe_Values.Look(ref pullEnabledGlobally, "pull_enabled_globally", true);
+        Scribe_Values.Look(ref defaultSourcePriority, "default_source_priority", 0);
+        Scribe_Values.Look(ref respectIngredientFilters, "respect_ingredient_filters", true);
+        Scribe_Values.Look(ref respectQualityRequirements, "respect_quality_requirements", true);
+        Scribe_Values.Look(ref maxAutomaticTransferDistance, "max_automatic_transfer_distance", 30);
+        Scribe_Values.Look(ref useBalancedSourceSelection, "use_balanced_source_selection", true);
+
+        PullEnabledGlobally = pullEnabledGlobally;
+        DefaultSourcePriority = defaultSourcePriority;
+        RespectIngredientFilters = respectIngredientFilters;
+        RespectQualityRequirements = respectQualityRequirements;
+        MaxAutomaticTransferDistance = maxAutomaticTransferDistance;
+        UseBalancedSourceSelection = useBalancedSourceSelection;
     }
 }

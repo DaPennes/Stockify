@@ -17,7 +17,8 @@ public class StockifyStorageManager
         var shelves = new List<StockifyShelf>();
 
         // Find all things in the area that could be shelves
-        var thingsInArea = map.listerThings.ThingsInArea(area, ThingRequest.ForDescribed(Lister.ThingsInRole(ThingRequest.Group.Building)));
+        var thingsInArea = map.listerThings.AllThings
+            .Where(thing => area.Contains(thing.Position) && thing is Building_Storage);
 
         foreach (var thing in thingsInArea)
         {
@@ -48,7 +49,7 @@ public class StockifyStorageManager
 
         var eligibleShelves = network.RegisteredShelves
             .Where(s => !excludedShelves.Contains(s))
-            .Where(s => s.HasCapacity())
+            .Where(s => s.GetAvailableCount(FindThingDef(materialLabel)) > 0)
             .ToList();
 
         if (eligibleShelves.Count == 0)
@@ -66,8 +67,8 @@ public class StockifyStorageManager
             if (selectionMode == StockifySelectionMode.NearestFirst)
             {
                 // Prefer nearest shelf
-                if (bestShelf == null || shelf.Thing.Position.DistanceTo(network.DesignatedArea.Center) <
-                    bestShelf.Thing.Position.DistanceTo(network.DesignatedArea.Center))
+                if (bestShelf == null || shelf.Thing.Position.DistanceTo(network.DesignatedArea.CenterCell) <
+                    bestShelf.Thing.Position.DistanceTo(network.DesignatedArea.CenterCell))
                 {
                     bestShelf = shelf;
                 }
@@ -85,8 +86,8 @@ public class StockifyStorageManager
             {
                 // Consider both distance and priority
                 if (bestShelf == null || this.IsBetterBalancedScore(score, bestScore,
-                    shelf.Thing.Position.DistanceTo(network.DesignatedArea.Center),
-                    bestShelf.Thing.Position.DistanceTo(network.DesignatedArea.Center)))
+                    shelf.Thing.Position.DistanceTo(network.DesignatedArea.CenterCell),
+                    bestShelf.Thing.Position.DistanceTo(network.DesignatedArea.CenterCell)))
                 {
                     bestShelf = shelf;
                 }
@@ -125,8 +126,8 @@ public class StockifyStorageManager
 
             if (selectionMode == StockifySelectionMode.NearestFirst)
             {
-                if (bestShelf == null || shelf.Thing.Position.DistanceTo(network.DesignatedArea.Center) <
-                    bestShelf.Thing.Position.DistanceTo(network.DesignatedArea.Center))
+                if (bestShelf == null || shelf.Thing.Position.DistanceTo(network.DesignatedArea.CenterCell) <
+                    bestShelf.Thing.Position.DistanceTo(network.DesignatedArea.CenterCell))
                 {
                     bestShelf = shelf;
                 }
@@ -142,8 +143,8 @@ public class StockifyStorageManager
             else if (selectionMode == StockifySelectionMode.Balanced)
             {
                 if (bestShelf == null || this.IsBetterBalancedScore(score, bestScore,
-                    shelf.Thing.Position.DistanceTo(network.DesignatedArea.Center),
-                    bestShelf.Thing.Position.DistanceTo(network.DesignatedArea.Center)))
+                    shelf.Thing.Position.DistanceTo(network.DesignatedArea.CenterCell),
+                    bestShelf.Thing.Position.DistanceTo(network.DesignatedArea.CenterCell)))
                 {
                     bestShelf = shelf;
                 }
@@ -168,7 +169,7 @@ public class StockifyStorageManager
         score += shelf.StoragePriority * 100;
 
         // Available quantity factor
-        var available = shelf.GetAvailableCount(Verse.ParseToolDef(materialLabel) ?? Verse.Content.Lookup<ThingDef>(materialLabel));
+        var available = shelf.GetAvailableCount(FindThingDef(materialLabel));
         score += available;
 
         return score;
@@ -203,7 +204,7 @@ public class StockifyStorageManager
     /// <param name="newDistance">The new shelf's distance.</param>
     /// <param name="currentDistance">The current best shelf's distance.</param>
     /// <returns>True if the new score is better.</returns>
-    private bool IsBetterBalancedScore(int newScore, int currentBest, int newDistance, int currentDistance)
+    private bool IsBetterBalancedScore(int newScore, int currentBest, float newDistance, float currentDistance)
     {
         // Balanced: prefer higher priority and available capacity, but distance matters too
         // Simple heuristic: if scores are close, prefer nearer shelf
@@ -213,5 +214,11 @@ public class StockifyStorageManager
             return newDistance < currentDistance; // prefer nearer
         }
         return scoreDifference > 0; // prefer higher score
+    }
+
+    private static ThingDef FindThingDef(string label)
+    {
+        return DefDatabase<ThingDef>.AllDefsListForReading
+            .FirstOrDefault(def => def.label == label || def.defName == label);
     }
 }

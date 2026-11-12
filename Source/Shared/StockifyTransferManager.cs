@@ -22,7 +22,7 @@ public class StockifyTransferManager
     public TransferRequest CreateTransferRequest(string materialLabel, int quantity, StockifyShelf sourceShelf, StockifyDestination destination)
     {
         // Check if we have enough available materials
-        if (sourceShelf == null || !sourceShelf.Network.TryReserveMaterials(materialLabel, quantity))
+        if (sourceShelf?.Network == null || !sourceShelf.Network.TryReserveMaterials(materialLabel, quantity))
         {
             return null;
         }
@@ -92,7 +92,7 @@ public class StockifyTransferManager
             .ToList();
 
         // Find available (non-reserved) items
-        var availableItems = sourceItems.Where(i => !i.IsReservedByBill).ToList();
+        var availableItems = sourceItems.Where(i => i.stackCount > 0).ToList();
 
         if (availableItems.Count == 0 || availableItems.Sum(i => i.stackCount) < request.Quantity)
         {

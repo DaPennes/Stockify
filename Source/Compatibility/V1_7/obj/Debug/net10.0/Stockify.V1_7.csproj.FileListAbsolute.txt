@@ -3,3 +3,14 @@ C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Comp
 C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Compatibility\V1_7\obj\Debug\net10.0\Stockify.V1_7.AssemblyInfo.cs
 C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Compatibility\V1_7\obj\Debug\net10.0\Stockify.V1_7.csproj.CoreCompileInputs.cache
 C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Compatibility\V1_7\obj\Debug\net10.0\Stockify.V1_7.sourcelink.json
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Compatibility\V1_7\bin\Debug\net10.0\Stockify.V1_7.deps.json
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Compatibility\V1_7\bin\Debug\net10.0\Stockify.V1_7.dll
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Compatibility\V1_7\bin\Debug\net10.0\Stockify.V1_7.pdb
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Compatibility\V1_7\bin\Debug\net10.0\Stockify.dll
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Compatibility\V1_7\bin\Debug\net10.0\Stockify.pdb
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Compatibility\V1_7\obj\Debug\net10.0\Stockify.V1_7.csproj.AssemblyReference.cache
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Compatibility\V1_7\obj\Debug\net10.0\Stockify.B8BC1E2C.Up2Date
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Compatibility\V1_7\obj\Debug\net10.0\Stockify.V1_7.dll
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Compatibility\V1_7\obj\Debug\net10.0\refint\Stockify.V1_7.dll
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Compatibility\V1_7\obj\Debug\net10.0\Stockify.V1_7.pdb
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Stockify\Source\Compatibility\V1_7\obj\Debug\net10.0\ref\Stockify.V1_7.dll

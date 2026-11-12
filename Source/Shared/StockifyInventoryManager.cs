@@ -17,12 +17,11 @@ public static class StockifyInventoryManager
 
         foreach (var shelf in network.RegisteredShelves)
         {
-            var shelfInventory = shelf.GetStoredItemsInventory();
-
-            foreach (var item in shelfInventory)
+            shelf.UpdateStoredItems();
+            foreach (var thing in shelf.StoredItems)
             {
-                var thingDef = item.Key;
-                var stackCount = item.Value;
+                var thingDef = thing.def;
+                var stackCount = thing.stackCount;
 
                 if (!inventory.ContainsKey(thingDef.label))
                 {

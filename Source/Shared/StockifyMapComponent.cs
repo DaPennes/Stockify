@@ -34,9 +34,9 @@ public class StockifyMapComponent : Verse.MapComponent
     /// </summary>
     public void RebuildShelfRegistration()
     {
-        foreach (var network in this.NETworks.ToList())
+        foreach (var network in this.Networks.ToList())
         {
-            network.UpdateShelfRegistration();
+            network.UpdateShelfRegistration(this.map);
         }
     }
 
@@ -48,7 +48,7 @@ public class StockifyMapComponent : Verse.MapComponent
     public StockifyNetwork CreateNetwork(string name, CellRect area)
     {
         var network = new StockifyNetwork(name, area);
-        this.NETworks.Add(network);
+        this.Networks.Add(network);
         return network;
     }
 
@@ -58,7 +58,7 @@ public class StockifyMapComponent : Verse.MapComponent
     /// <param name="network">The network to remove.</param>
     public void RemoveNetwork(StockifyNetwork network)
     {
-        this.NETworks.Remove(network);
+        this.Networks.Remove(network);
     }
 
     /// <summary>
@@ -68,7 +68,7 @@ public class StockifyMapComponent : Verse.MapComponent
     /// <returns>The network, or null if not found.</returns>
     public StockifyNetwork GetNetworkByID(int id)
     {
-        return this.NETworks.FirstOrDefault(n => n.ID == id);
+        return this.Networks.FirstOrDefault(n => n.ID == id);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public class StockifyMapComponent : Verse.MapComponent
     /// <returns>List of networks with input enabled.</returns>
     public List<StockifyNetwork> GetNetworksWithInputEnabled()
     {
-        return this.NETworks.Where(n => n.InputEnabled).ToList();
+        return this.Networks.Where(n => n.InputEnabled).ToList();
     }
 
     /// <summary>
@@ -86,6 +86,6 @@ public class StockifyMapComponent : Verse.MapComponent
     /// <returns>List of networks with output enabled.</returns>
     public List<StockifyNetwork> GetNetworksWithOutputEnabled()
     {
-        return this.NETworks.Where(n => n.OutputEnabled).ToList();
+        return this.Networks.Where(n => n.OutputEnabled).ToList();
     }
 }

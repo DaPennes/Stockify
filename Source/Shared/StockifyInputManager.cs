@@ -18,12 +18,12 @@ public static class StockifyInputManager
         if (destinationShelf == null)
         {
             var map = thing.Map;
-            var mapComponent = Find.WorldObjects.GetComponent<StockifyMapComponent>();
+            var mapComponent = map?.GetComponent<StockifyMapComponent>();
 
             if (mapComponent != null)
             {
                 // Try each network's input-enabled shelves
-                foreach (var network in mapComponent.NETworks.Where(n => n.InputEnabled))
+                foreach (var network in mapComponent.Networks.Where(n => n.InputEnabled))
                 {
                     var shelf = FindBestInputShelf(network, thing.def);
                     if (shelf != null)
@@ -38,22 +38,22 @@ public static class StockifyInputManager
         }
 
         // If we have a specific shelf, check if it belongs to an input-enabled network
-        var network = destinationShelf.Network;
-        if (network != null && network.InputEnabled)
+        var destinationNetwork = destinationShelf.Network;
+        if (destinationNetwork != null && destinationNetwork.InputEnabled)
         {
             // Verify the thing is acceptable for this network
-            if (IsInputEligible(network, thing))
+            if (IsInputEligible(destinationNetwork, thing.def))
             {
                 // Check capacity
                 if (destinationShelf.HasCapacity(1))
                 {
                     // Accept the thing
                     destinationShelf.StoredItems.Add(thing);
-                    Messages.Message($"Stockify: Accepted {thing.Label} into network {network.Name}", MessageTypeDefOf.PositiveEvent);
+                    Messages.Message($"Stockify: Accepted {thing.Label} into network {destinationNetwork.Name}", MessageTypeDefOf.PositiveEvent);
                 }
                 else
                 {
-                    Messages.Message($"Stockify: Network {network.Name} at capacity, {thing.Label} rejected", MessageTypeDefOf.NegativeEvent);
+                    Messages.Message($"Stockify: Network {destinationNetwork.Name} at capacity, {thing.Label} rejected", MessageTypeDefOf.NegativeEvent);
                 }
             }
         }

@@ -1,0 +1,52 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "Stockify.V1_7/1.0.0": {
+        "dependencies": {
+          "Stockify": "1.0.0",
+          "Stockify.Reference": "1.0.0.0"
+        },
+        "runtime": {
+          "Stockify.V1_7.dll": {}
+        }
+      },
+      "Stockify/1.0.0": {
+        "runtime": {
+          "Stockify.dll": {
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      },
+      "Stockify.Reference/1.0.0.0": {
+        "runtime": {
+          "Stockify.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "Stockify.V1_7/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Stockify/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Stockify.Reference/1.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

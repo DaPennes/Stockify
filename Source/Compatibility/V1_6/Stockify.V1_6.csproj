@@ -1,16 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <TargetFramework>net472</TargetFramework>
     <AssemblyName>Stockify</AssemblyName>
     <RootNamespace>Stockify</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <ImplicitUsings>false</ImplicitUsings>
+    <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
-    <LangVersion>7.3</LangVersion>
-    <RimWorldDir Condition="'$(RimWorldDir)' == ''">$(MSBuildThisFileDirectory)..\..\..\..</RimWorldDir>
+    <LangVersion>latest</LangVersion>
+    <RimWorldDir Condition="'$(RimWorldDir)' == ''">$(MSBuildThisFileDirectory)..\..\..\..\..</RimWorldDir>
     <OutputPath>$(MSBuildThisFileDirectory)..\..\..\1.6\Assemblies\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -29,26 +30,33 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="../Shared/StockifyMod.cs" />
-    <Compile Include="../Shared/StockifySettings.cs" />
-    <Compile Include="../Shared/StockifyStorageManager.cs" />
-    <Compile Include="../Shared/StockifyTransferManager.cs" />
-    <Compile Include="../Shared/StockifyNetwork.cs" />
-    <Compile Include="../Shared/StockifyMapComponent.cs" />
-    <Compile Include="../Shared/StockifyMainWindow.cs" />
-    <Compile Include="../Shared/StockifyDesignationTool.cs" />
-    <Compile Include="../Shared/StockifyBillComp.cs" />
-    <Compile Include="../Shared/StockifyBillIntegration.cs" />
-    <Compile Include="../Shared/StockifyTransferInfo.cs" />
-    <Compile Include="../Shared/StockifyShelf.cs" />
-    <Compile Include="../Shared/StockifyDestination.cs" />
-    <Compile Include="../Shared/StockifyOutputManager.cs" />
-    <Compile Include="../Shared/StockifyInputManager.cs" />
-    <Compile Include="../Shared/StockifyInventoryManager.cs" />
-    <Compile Include="../Shared/StockifyGetWindow.cs" />
-    <Compile Include="../Shared/StockifyMaterialSearch.cs" />
-    <Compile Include="../Shared/StockifyBillComp.cs" />
-    <Compile Include="../Shared/StockifyMainWindow.cs" />
+    <Using Include="RimWorld" />
+    <Using Include="UnityEngine" />
+    <Using Include="Verse" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../../Shared/StockifyMod.cs" />
+    <Compile Include="../../Shared/StockifySettings.cs" />
+    <Compile Include="../../Shared/StockifyStorageManager.cs" />
+    <Compile Include="../../Shared/StockifyTransferManager.cs" />
+    <Compile Include="../../Shared/StockifyNetwork.cs" />
+    <Compile Include="../../Shared/StockifyMapComponent.cs" />
+    <Compile Include="../../Shared/StockifyMainWindow.cs" />
+    <Compile Include="../../Shared/StockifyDesignationTool.cs" />
+    <Compile Include="../../Shared/StockifyBillComp.cs" />
+    <Compile Include="../../Shared/StockifyBillIntegration.cs" />
+    <Compile Include="../../Shared/StockifyTransferInfo.cs" />
+    <Compile Include="../../Shared/StockifyShelf.cs" />
+    <Compile Include="../../Shared/StockifyDestination.cs" />
+    <Compile Include="../../Shared/StockifyOutputManager.cs" />
+    <Compile Include="../../Shared/StockifyInputManager.cs" />
+    <Compile Include="../../Shared/StockifyInventoryManager.cs" />
+    <Compile Include="../../Shared/StockifyGetWindow.cs" />
+    <Compile Include="../../Shared/StockifyMaterialSearch.cs" />
+    <Compile Include="../../Shared/StockifySelectionMode.cs" />
+    <Compile Include="../../Shared/GetRequest.cs" />
+    <Compile Include="../../Shared/NetworkMaterialInfo.cs" />
   </ItemGroup>
 
 </Project>

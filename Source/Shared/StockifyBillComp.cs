@@ -84,7 +84,7 @@ public class StockifyBillComp : Verse.ThingComp
         foreach (var req in requirements)
         {
             // Find eligible networks (those with PULL enabled and having materials)
-            foreach (var network in mapComponent.NETworks)
+            foreach (var network in mapComponent.Networks)
             {
                 if (!network.PullEnabled) continue;
 
@@ -142,14 +142,12 @@ public class StockifyBillComp : Verse.ThingComp
         var pullEnabled = PullEnabled;
         var sourceNetworks = SourceNetworks;
         var ingredientFilters = IngredientFilters;
-        var cachedRequirements = CachedRequirements;
-        Scribe.Look(ref pullEnabled, "pull_enabled", true);
-        Scribe.Look(ref sourceNetworks, "source_networks");
-        Scribe.Look(ref ingredientFilters, "ingredient_filters");
-        Scribe.Look(ref cachedRequirements, "cached_requirements");
+        Scribe_Values.Look(ref pullEnabled, "pull_enabled", true);
+        Scribe_Collections.Look(ref sourceNetworks, "source_networks", LookMode.Value);
+        Scribe_Collections.Look(ref ingredientFilters, "ingredient_filters", LookMode.Value);
         PullEnabled = pullEnabled;
         SourceNetworks = sourceNetworks ?? new List<int>();
         IngredientFilters = ingredientFilters ?? new List<string>();
-        CachedRequirements = cachedRequirements ?? new List<StockifyBillIntegration.IngredientRequirement>();
+        CachedRequirements = new List<StockifyBillIntegration.IngredientRequirement>();
     }
 }

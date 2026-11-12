@@ -125,7 +125,7 @@ public class GetRequest
     /// <returns>True if the request was fully processed.</returns>
     public bool Process()
     {
-        if (Status == GetRequestStatus.Completed || Status == GetRequestStatus.Cancelled || Status == GetRequestStatus.Failed)
+        if (Status == GetRequestStatus.Complete || Status == GetRequestStatus.Cancelled || Status == GetRequestStatus.Failed)
         {
             return true; // Already terminal state
         }
@@ -133,12 +133,19 @@ public class GetRequest
         // If we have a shelf and destination, attempt transfer
         if (SourceShelf != null && Destination != null)
         {
-            return SourceShelf.TryTransferToDestination(new StockifyTransferInfo
+            var completed = SourceShelf.TryTransferToDestination(new StockifyTransferInfo
             {
                 MaterialLabel = MaterialLabel,
                 Quantity = ActualQuantity,
                 SourceNetwork = SourceNetwork
             }, Destination);
+            if (completed)
+            {
+                Status = GetRequestStatus.Complete;
+                SourceNetwork?.ReleaseReservation(MaterialLabel, ActualQuantity);
+            }
+
+            return completed;
         }
 
         // If reserved but not yet transferred, mark as in progress
@@ -155,7 +162,7 @@ public class GetRequest
     /// </summary>
     public void Cancel()
     {
-        if (Status == GetRequestStatus.Completed || Status == GetRequestStatus.Cancelled || Status == GetRequestStatus.Failed)
+        if (Status == GetRequestStatus.Complete || Status == GetRequestStatus.Cancelled || Status == GetRequestStatus.Failed)
         {
             return;
         }

@@ -24,7 +24,10 @@ public class StockifyMod : Verse.Mod
     /// <summary>
     /// Gets or sets the designation tool.
     /// </summary>
-    public StockifyDesignationTool DesignationTool { get; private set; }
+    private StockifyDesignationTool _designationTool;
+
+    public StockifyDesignationTool DesignationTool =>
+        _designationTool ??= new StockifyDesignationTool();
 
     /// <summary>
     /// Gets or sets the main window.
@@ -41,7 +44,6 @@ public class StockifyMod : Verse.Mod
         StockifyMod.Instance = this;
         this.StorageManager = new StockifyStorageManager();
         this.TransferManager = new StockifyTransferManager();
-        this.DesignationTool = new StockifyDesignationTool();
         this.MainWindow = new StockifyMainWindow();
     }
 }

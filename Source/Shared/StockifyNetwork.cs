@@ -18,7 +18,7 @@ public class StockifyNetwork
     /// <summary>
     /// Gets the designated area for this network.
     /// </summary>
-    public CellRect DesignatedArea { get; }
+    public CellRect DesignatedArea { get; set; }
 
     /// <summary>
     /// Gets the registered shelves in this network.
@@ -44,6 +44,8 @@ public class StockifyNetwork
     /// Gets or sets whether OUTPUT is enabled for this network.
     /// </summary>
     public bool OutputEnabled { get; set; } = true;
+
+    public List<string> IngredientFilters { get; } = new List<string>();
 
     /// <summary>
     /// Gets or sets the storage priority for this network.
@@ -76,6 +78,7 @@ public class StockifyNetwork
         if (!this.RegisteredShelves.Contains(shelf))
         {
             this.RegisteredShelves.Add(shelf);
+            shelf.Network = this;
             this.UpdateMaterialInventory();
         }
     }
@@ -86,8 +89,35 @@ public class StockifyNetwork
     /// <param name="shelf">The shelf to unregister.</param>
     public void UnregisterShelf(StockifyShelf shelf)
     {
-        this.RegisteredShelves.Remove(shelf);
+        if (this.RegisteredShelves.Remove(shelf) && shelf.Network == this)
+        {
+            shelf.Network = null;
+        }
         this.UpdateMaterialInventory();
+    }
+
+    public void UpdateShelfRegistration(Map map)
+    {
+        if (map == null) return;
+
+        var shelvesInArea = map.listerThings.AllThings
+            .Where(thing => thing is Building_Storage && this.DesignatedArea.Contains(thing.Position))
+            .Select(thing => this.RegisteredShelves.FirstOrDefault(shelf => shelf.Thing == thing)
+                ?? new StockifyShelf(thing))
+            .ToList();
+
+        foreach (var shelf in this.RegisteredShelves.ToList())
+        {
+            if (!shelvesInArea.Contains(shelf))
+            {
+                this.UnregisterShelf(shelf);
+            }
+        }
+
+        foreach (var shelf in shelvesInArea)
+        {
+            this.RegisterShelf(shelf);
+        }
     }
 
     /// <summary>
@@ -100,6 +130,7 @@ public class StockifyNetwork
 
         foreach (var shelf in this.RegisteredShelves)
         {
+            shelf.UpdateStoredItems();
             foreach (var item in shelf.StoredItems)
             {
                 var def = item.def;
@@ -210,6 +241,7 @@ public class StockifyNetwork
         }
 
         // Execute the transfer
-        return sourceShelf.TryTransferToDestination(info, quantity, destination);
+        return sourceShelf.TryTransferToDestination(
+            new StockifyTransferInfo(materialLabel, quantity, this), destination);
     }
 }
