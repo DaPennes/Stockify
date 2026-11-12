@@ -9,25 +9,19 @@ public static class StockifyInventoryManager
         if (network == null)
             return inventory;
 
-        foreach (var shelf in network.RegisteredShelves)
+        foreach (var thing in network.GetStoredItems(network.Map))
         {
-            shelf.UpdateStoredItems();
-            foreach (var thing in shelf.StoredItems)
+            if (thing == null || thing.Destroyed || thing.IsForbidden(Faction.OfPlayer) ||
+                !network.AllowsMaterial(thing))
+                continue;
+
+            if (!inventory.TryGetValue(thing.def.defName, out var info))
             {
-                if (thing == null || thing.Destroyed || thing.IsForbidden(Faction.OfPlayer) ||
-                    !network.AllowsMaterial(thing) ||
-                    shelf.Thing is Building_Storage storage &&
-                    storage.GetStoreSettings()?.AllowedToAccept(thing) != true)
-                    continue;
-
-                if (!inventory.TryGetValue(thing.def.defName, out var info))
-                {
-                    info = new NetworkMaterialInfo(thing.def);
-                    inventory.Add(thing.def.defName, info);
-                }
-
-                info.AddItem(thing.def, thing.stackCount);
+                info = new NetworkMaterialInfo(thing.def);
+                inventory.Add(thing.def.defName, info);
             }
+
+            info.AddItem(thing.def, thing.stackCount);
         }
 
         return inventory;
@@ -52,7 +46,7 @@ public static class StockifyInventoryManager
         if (network == null || material == null)
             return 0;
 
-        var map = network.RegisteredShelves
+        var map = network.Map ?? network.RegisteredShelves
             .Select(shelf => shelf.Thing?.Map)
             .FirstOrDefault(candidate => candidate != null);
         if (map == null)
@@ -86,23 +80,16 @@ public static class StockifyInventoryManager
         }
 
         var available = 0;
-        foreach (var shelf in network.RegisteredShelves)
+        foreach (var thing in network.GetStoredItems(map))
         {
-            if (shelf.Thing is not Building_Storage storage)
+            if (thing.def != material || thing.IsForbidden(Faction.OfPlayer) ||
+                !network.AllowsMaterial(thing))
                 continue;
 
-            foreach (var thing in storage.GetSlotGroup()?.HeldThings ?? Enumerable.Empty<Thing>())
-            {
-                if (thing.def != material || thing.IsForbidden(Faction.OfPlayer) ||
-                    !network.AllowsMaterial(thing) ||
-                    storage.GetStoreSettings()?.AllowedToAccept(thing) != true)
-                    continue;
-
-                reservedCounts.TryGetValue(thing, out var reserved);
-                haulingCounts.TryGetValue(thing, out var hauling);
-                available += Math.Max(
-                    0, thing.stackCount - Math.Min(thing.stackCount, Math.Max(reserved, hauling)));
-            }
+            reservedCounts.TryGetValue(thing, out var reserved);
+            haulingCounts.TryGetValue(thing, out var hauling);
+            available += Math.Max(
+                0, thing.stackCount - Math.Min(thing.stackCount, Math.Max(reserved, hauling)));
         }
 
         return available;

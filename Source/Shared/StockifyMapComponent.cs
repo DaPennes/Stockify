@@ -6,6 +6,17 @@ namespace Stockify;
 /// </summary>
 public class StockifyMapComponent : Verse.MapComponent
 {
+    private static readonly Color[] AreaColors =
+    {
+        new(0.35f, 0.8f, 1f, 0.9f),
+        new(1f, 0.75f, 0.25f, 0.9f),
+        new(0.7f, 0.45f, 1f, 0.9f),
+        new(0.45f, 1f, 0.55f, 0.9f)
+    };
+
+    private List<List<IntVec3>> _overlayCellGroups = new();
+    private bool _overlayCacheDirty = true;
+
     /// <summary>
     /// Gets or sets the collection of storage networks on this map.
     /// </summary>
@@ -35,6 +46,8 @@ public class StockifyMapComponent : Verse.MapComponent
     public override void FinalizeInit()
     {
         base.FinalizeInit();
+        foreach (var network in Networks)
+            network.AttachToMap(map);
         RebuildLocalShelfRegistration();
         this.RebuildShelfRegistration();
     }
@@ -47,8 +60,30 @@ public class StockifyMapComponent : Verse.MapComponent
         RebuildLocalShelfRegistration();
         foreach (var network in Networks)
         {
+            network.AttachToMap(map);
             network.UpdateShelfRegistration(map);
-            network.UpdateMaterialInventory();
+            network.UpdateMaterialInventory(map);
+        }
+    }
+
+    public override void MapComponentDraw()
+    {
+        base.MapComponentDraw();
+        if (_overlayCacheDirty)
+        {
+            _overlayCellGroups = Networks
+                .Select((network, index) => network.DesignatedCells
+                    .Where(cell => cell.InBounds(map) && network.ContainsCell(cell, map))
+                    .ToList())
+                .ToList();
+            _overlayCacheDirty = false;
+        }
+
+        for (var index = 0; index < _overlayCellGroups.Count; index++)
+        {
+            var cells = _overlayCellGroups[index];
+            if (cells.Count > 0)
+                GenDraw.DrawFieldEdges(cells, AreaColors[index % AreaColors.Length]);
         }
     }
 
@@ -65,9 +100,12 @@ public class StockifyMapComponent : Verse.MapComponent
     /// </summary>
     public void RebuildShelfRegistration()
     {
+        _overlayCacheDirty = true;
         foreach (var network in this.Networks.ToList())
         {
+            network.AttachToMap(map);
             network.UpdateShelfRegistration(this.map);
+            network.UpdateMaterialInventory(this.map);
         }
     }
 
@@ -78,12 +116,18 @@ public class StockifyMapComponent : Verse.MapComponent
     /// <param name="area">The designated area.</param>
     public StockifyNetwork CreateNetwork(string name, CellRect area)
     {
-        var network = new StockifyNetwork(name, area);
+        return CreateNetwork(name, area.Cells);
+    }
+
+    public StockifyNetwork CreateNetwork(string name, IEnumerable<IntVec3> designatedCells)
+    {
+        var network = new StockifyNetwork(name, designatedCells);
         while (Networks.Any(existing => existing.ID == network.ID))
         {
-            network = new StockifyNetwork(name, area);
+            network = new StockifyNetwork(name, designatedCells);
         }
 
+        network.AttachToMap(map);
         this.Networks.Add(network);
         RebuildShelfRegistration();
         return network;

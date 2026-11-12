@@ -5,6 +5,10 @@ namespace Stockify;
 /// </summary>
 public class StockifyNetwork : IExposable
 {
+    private Map _map;
+
+    public Map Map => _map;
+
     /// <summary>
     /// Gets the unique identifier for this network.
     /// </summary>
@@ -15,10 +19,17 @@ public class StockifyNetwork : IExposable
     /// </summary>
     public string Name { get; set; }
 
-    /// <summary>
-    /// Gets the designated area for this network.
-    /// </summary>
-    public CellRect DesignatedArea { get; set; }
+    private HashSet<IntVec3> _designatedCellLookup = new();
+
+    public List<IntVec3> DesignatedCells { get; private set; } = new();
+
+    public CellRect DesignatedArea
+    {
+        get => DesignatedCells.Count == 0
+            ? CellRect.Empty
+            : CellRect.FromCellList(DesignatedCells);
+        set => SetDesignatedCells(value.Cells);
+    }
 
     /// <summary>
     /// Gets the registered shelves in this network.
@@ -55,8 +66,12 @@ public class StockifyNetwork : IExposable
 
     public bool AllowsMaterial(Thing thing)
     {
-        return thing?.def != null &&
-               !IngredientFilters.Contains(thing.def.defName);
+        return thing?.def != null && AllowsMaterial(thing.def);
+    }
+
+    public bool AllowsMaterial(ThingDef material)
+    {
+        return material != null && !IngredientFilters.Contains(material.defName);
     }
 
     /// <summary>
@@ -70,10 +85,15 @@ public class StockifyNetwork : IExposable
     /// <param name="name">The network name.</param>
     /// <param name="area">The designated area.</param>
     public StockifyNetwork(string name, CellRect area)
+        : this(name, area.Cells)
+    {
+    }
+
+    public StockifyNetwork(string name, IEnumerable<IntVec3> designatedCells)
     {
         this.ID = UnityEngine.Random.Range(100000, 999999);
         this.Name = name;
-        this.DesignatedArea = area;
+        SetDesignatedCells(designatedCells);
     }
 
     public StockifyNetwork() : this("", CellRect.Empty)
@@ -84,10 +104,12 @@ public class StockifyNetwork : IExposable
     {
         var id = ID;
         var name = Name;
-        var minX = DesignatedArea.minX;
-        var minZ = DesignatedArea.minZ;
-        var maxX = DesignatedArea.maxX;
-        var maxZ = DesignatedArea.maxZ;
+        var area = DesignatedArea;
+        var minX = area.minX;
+        var minZ = area.minZ;
+        var maxX = area.maxX;
+        var maxZ = area.maxZ;
+        var designatedCells = DesignatedCells;
         var getEnabled = GetEnabled;
         var pullEnabled = PullEnabled;
         var inputEnabled = InputEnabled;
@@ -102,6 +124,7 @@ public class StockifyNetwork : IExposable
         Scribe_Values.Look(ref minZ, "areaMinZ");
         Scribe_Values.Look(ref maxX, "areaMaxX");
         Scribe_Values.Look(ref maxZ, "areaMaxZ");
+        Scribe_Collections.Look(ref designatedCells, "designatedCells", LookMode.Value);
         Scribe_Values.Look(ref getEnabled, "getEnabled", true);
         Scribe_Values.Look(ref pullEnabled, "pullEnabled", true);
         Scribe_Values.Look(ref inputEnabled, "inputEnabled", true);
@@ -114,7 +137,15 @@ public class StockifyNetwork : IExposable
         {
             ID = id;
             Name = name ?? "";
-            DesignatedArea = CellRect.FromLimits(minX, minZ, maxX, maxZ);
+            if (designatedCells == null || designatedCells.Count == 0)
+            {
+                var legacyArea = minX <= maxX && minZ <= maxZ
+                    ? CellRect.FromLimits(minX, minZ, maxX, maxZ)
+                    : CellRect.Empty;
+                designatedCells = legacyArea.Cells.ToList();
+            }
+
+            SetDesignatedCells(designatedCells);
             GetEnabled = getEnabled;
             PullEnabled = pullEnabled;
             InputEnabled = inputEnabled;
@@ -125,6 +156,7 @@ public class StockifyNetwork : IExposable
             {
                 IngredientFilters.AddRange(ingredientFilters);
             }
+
             ExcludedShelfThingIds.Clear();
             if (excludedShelfThingIds != null)
             {
@@ -133,6 +165,67 @@ public class StockifyNetwork : IExposable
 
             RegisteredShelves.Clear();
             MaterialInventory.Clear();
+        }
+    }
+
+    public void SetDesignatedCells(IEnumerable<IntVec3> cells)
+    {
+        DesignatedCells = cells?
+            .Distinct()
+            .OrderBy(cell => cell.x)
+            .ThenBy(cell => cell.z)
+            .ToList() ?? new List<IntVec3>();
+        _designatedCellLookup = new HashSet<IntVec3>(DesignatedCells);
+    }
+
+    public bool ContainsCell(IntVec3 cell, Map map = null)
+    {
+        if (!_designatedCellLookup.Contains(cell))
+            return false;
+
+        map ??= _map ?? RegisteredShelves
+            .Select(shelf => shelf.Thing?.Map)
+            .FirstOrDefault(candidate => candidate != null);
+        var networks = map?.GetComponent<StockifyMapComponent>()?.Networks;
+        return networks == null ||
+               !networks.TakeWhile(network => network != this)
+                   .Any(network => network._designatedCellLookup.Contains(cell));
+    }
+
+    public void AttachToMap(Map map)
+    {
+        _map = map;
+    }
+
+    public bool IsValidStorageCell(IntVec3 cell, Map map, Thing item)
+    {
+        return map != null &&
+               item != null &&
+               ContainsCell(cell, map) &&
+               StoreUtility.IsValidStorageFor(cell, map, item) &&
+               !map.thingGrid.ThingsListAt(cell)
+                   .OfType<Building_Storage>()
+                   .Any(storage => storage.TryGetComp<CompStockifyShelf>() != null);
+    }
+
+    public IEnumerable<Thing> GetStoredItems(Map map)
+    {
+        if (map == null)
+            yield break;
+
+        var seen = new HashSet<Thing>();
+        foreach (var cell in DesignatedCells)
+        {
+            if (!cell.InBounds(map) || !ContainsCell(cell, map))
+                continue;
+
+            foreach (var item in map.thingGrid.ThingsListAt(cell))
+            {
+                if (item.def?.category == ThingCategory.Item &&
+                    seen.Add(item) &&
+                    IsValidStorageCell(item.Position, map, item))
+                    yield return item;
+            }
         }
     }
 
@@ -146,7 +239,7 @@ public class StockifyNetwork : IExposable
         {
             this.RegisteredShelves.Add(shelf);
             shelf.Network = this;
-            this.UpdateMaterialInventory();
+            this.UpdateMaterialInventory(shelf.Thing?.Map);
         }
     }
 
@@ -160,24 +253,22 @@ public class StockifyNetwork : IExposable
         {
             shelf.Network = null;
         }
-        this.UpdateMaterialInventory();
+        this.UpdateMaterialInventory(shelf.Thing?.Map ?? _map);
     }
 
     public void UpdateShelfRegistration(Map map)
     {
         if (map == null) return;
 
-        var networks = map.GetComponent<StockifyMapComponent>()?.Networks;
-        var earlierNetworks = networks == null
-            ? new List<StockifyNetwork>()
-            : networks.TakeWhile(network => network != this).ToList();
         var shelvesInArea = map.listerThings.AllThings
-            .Where(thing => thing is Building_Storage &&
+            .Where(thing => thing is Building_Storage storage &&
                             thing.TryGetComp<CompStockifyShelf>() == null &&
-                            this.DesignatedArea.Contains(thing.Position) &&
+                            storage.AllSlotCells().Any(cell => ContainsCell(cell, map)) &&
                             !this.ExcludedShelfThingIds.Contains(thing.thingIDNumber) &&
-                            !earlierNetworks.Any(network =>
-                                network.RegisteredShelves.Any(shelf => shelf.Thing == thing)))
+                            !map.GetComponent<StockifyMapComponent>().Networks
+                                .TakeWhile(network => network != this)
+                                .Any(network =>
+                                    network.RegisteredShelves.Any(shelf => shelf.Thing == thing)))
             .Select(thing => this.RegisteredShelves.FirstOrDefault(shelf => shelf.Thing == thing)
                 ?? new StockifyShelf(thing))
             .ToList();
@@ -200,31 +291,26 @@ public class StockifyNetwork : IExposable
     /// Updates the material inventory for this network.
     /// Recalculates all material counts from registered shelves.
     /// </summary>
-    public void UpdateMaterialInventory()
+    public void UpdateMaterialInventory(Map map = null)
     {
         this.MaterialInventory.Clear();
+        map ??= _map ?? RegisteredShelves
+            .Select(shelf => shelf.Thing?.Map)
+            .FirstOrDefault(candidate => candidate != null);
 
-        foreach (var shelf in this.RegisteredShelves)
+        foreach (var item in GetStoredItems(map))
         {
-            shelf.UpdateStoredItems();
-            foreach (var item in shelf.StoredItems)
+            if (item.def == null || item.IsForbidden(Faction.OfPlayer) || !AllowsMaterial(item))
+                continue;
+
+            var defName = item.def.defName;
+            if (!MaterialInventory.TryGetValue(defName, out var info))
             {
-                if (item?.def == null || item.IsForbidden(Faction.OfPlayer) ||
-                    !AllowsMaterial(item) ||
-                    shelf.Thing is Building_Storage storage &&
-                    storage.GetStoreSettings()?.AllowedToAccept(item) != true)
-                    continue;
-
-                var def = item.def;
-                var defName = def.defName;
-
-                if (!this.MaterialInventory.ContainsKey(defName))
-                {
-                    this.MaterialInventory[defName] = new NetworkMaterialInfo(def);
-                }
-
-                this.MaterialInventory[defName].AddItem(item);
+                info = new NetworkMaterialInfo(item.def);
+                MaterialInventory.Add(defName, info);
             }
+
+            info.AddItem(item);
         }
     }
 

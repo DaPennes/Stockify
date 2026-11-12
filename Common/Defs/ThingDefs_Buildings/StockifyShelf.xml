@@ -4,6 +4,13 @@
     <defName>StockifyShelf</defName>
     <label>Stockify shelf</label>
     <description>A supply shelf that can be assigned to a workbench and replenished from selected warehouses.</description>
+    <graphicData>
+      <texPath>Things/Building/Furniture/ShelfSmall</texPath>
+      <graphicClass>Graphic_Multi</graphicClass>
+      <drawSize>(2,2)</drawSize>
+    </graphicData>
+    <uiIconScale>0.5</uiIconScale>
+    <size>(1,1)</size>
     <costStuffCount>10</costStuffCount>
     <statBases>
       <MaxHitPoints>50</MaxHitPoints>

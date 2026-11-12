@@ -35,7 +35,8 @@ public class StockifyNetworkShelvesWindow : Window
             inRect.x, inRect.y + 64f, inRect.width, inRect.height - 64f);
         var shelves = Find.CurrentMap.listerThings.AllThings
             .OfType<Building_Storage>()
-            .Where(shelf => _network.DesignatedArea.Contains(shelf.Position) &&
+            .Where(shelf => shelf.AllSlotCells()
+                                .Any(cell => _network.ContainsCell(cell, Find.CurrentMap)) &&
                             shelf.TryGetComp<CompStockifyShelf>() == null &&
                             (string.IsNullOrWhiteSpace(_search) ||
                              shelf.LabelCap.ToString().IndexOf(

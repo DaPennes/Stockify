@@ -687,14 +687,22 @@ public class StockifyStockLevelWindow : Window
 
         var sourceNetworks = mapComponent.Networks.Where(network =>
             _shelf.SourceNetworkIds.Contains(network.ID)).ToList();
+        var map = _shelf.parent.Map;
         var materials = DefDatabase<ThingDef>.AllDefsListForReading
             .Where(material => material.category == ThingCategory.Item &&
                                material.EverHaulable &&
                                sourceNetworks.Any(network =>
-                                   !network.IngredientFilters.Contains(material.defName) &&
-                                   network.RegisteredShelves.Any(sourceShelf =>
-                                       sourceShelf.Thing is Building_Storage storage &&
-                                       storage.GetStoreSettings()?.AllowedToAccept(material) == true)))
+                                   network.AllowsMaterial(material) &&
+                                   network.DesignatedCells.Any(cell =>
+                                       cell.InBounds(map) &&
+                                       network.ContainsCell(cell, map) &&
+                                       (map.thingGrid.ThingsListAt(cell)
+                                            .OfType<Building_Storage>()
+                                            .Any(storage =>
+                                                storage.TryGetComp<CompStockifyShelf>() == null &&
+                                                storage.GetStoreSettings()?.AllowedToAccept(material) == true) ||
+                                        map.zoneManager.ZoneAt(cell) is Zone_Stockpile stockpile &&
+                                        stockpile.GetStoreSettings()?.AllowedToAccept(material) == true))))
             .ToList();
 
         var options = materials

@@ -5,13 +5,14 @@ Stockify is a work-in-progress storage and supply mod for RimWorld 1.6 and 1.7. 
 ## Current functionality
 
 - Mod-list metadata and version-specific folders for RimWorld 1.6 and 1.7.
-- Persistent map storage networks that discover vanilla storage buildings inside a designated area.
+- Persistent map storage networks defined by individually designated tiles; drag to add/remove tiles and see colored map overlays.
+- Inventory counts include only real, non-forbidden items on designated tiles that vanilla considers valid storage locations, including stockpile zones and filtered shelves. Overlapping tiles are owned by the earlier network and are not double-counted.
 - Connected warehouse shelves can be included/excluded from the network UI and the choice is saved.
-- Overlapping warehouse areas do not double-count a storage building; the earlier network owns overlapping buildings unless that shelf is explicitly excluded.
+- Storage areas can be renamed, edited, and deleted; deleting an area removes its source links and manual requests from local shelves.
 - A Stockify Shelf building with saved warehouse and workbench assignments.
 - Per-material minimum, target, and maximum stock controls, plus shelf naming and transfer priorities.
 - Searchable warehouse material exclusions and configurable warehouse transfer priority.
-- A warehouse management window and a designation tool for creating or resizing storage areas.
+- A warehouse management window and a designation tool for creating or editing tile-based storage areas.
 - Vanilla hauling jobs for:
   - INPUT: moving eligible loose items into enabled warehouse shelves only when vanilla storage selection chooses that warehouse as the best destination.
   - GET: search materials, select a warehouse and compatible Stockify Shelf, and request a quantity; the dialog estimates unreserved stock, subtracts outstanding requests, caps fulfillment, and reports any shortfall.
@@ -23,11 +24,11 @@ Stockify is a work-in-progress storage and supply mod for RimWorld 1.6 and 1.7. 
 
 - This is not a finished implementation of the full development specification.
 - GET can be cancelled; its distinct Stockify hauling jobs are interrupted through vanilla job cleanup, releasing their reservations. Progress is shown on the shelf inspect panel rather than in a transfer queue.
-- Warehouse overview quantities are keyed by ThingDef and represent physical stored stacks. GET separately estimates unreserved quantities from vanilla reservations and in-flight hauling jobs; a stack reserved by another vanilla job is not counted as requestable.
+- Warehouse overview quantities are keyed by ThingDef and represent physical stored stacks on valid designated storage tiles. GET separately estimates unreserved quantities from vanilla reservations and in-flight hauling jobs; a stack reserved by another vanilla job is not counted as requestable.
 - Per-material filters on individual Stockify shelves still use their vanilla storage tab; recovering interrupted requests with detailed per-job status is incomplete.
 - A headless RimWorld 1.7.5005 startup was attempted with Stockify enabled and reached `UIRoot` without Stockify-specific log entries or the earlier language/initialization warnings. The headless run then produced input-related `KeyBindingDef` exceptions in `ScreenshotTaker`; it does not verify interactive use, hauling, cancellation, or save/load.
 - GET/PULL/INPUT/OUTPUT and save/load behavior have not been tested interactively. Do not treat successful compilation or headless startup as gameplay validation.
-- The 1.6 project currently compiles against the assemblies available in this environment; a separate RimWorld 1.6 installation was not available to verify its APIs or runtime behavior.
+- The Stockify Shelf uses a 1x1 footprint. The 1.6 project currently compiles against the assemblies available in this environment; a separate RimWorld 1.6 installation was not available to verify its APIs or runtime behavior.
 - Validation performed: both version projects built successfully with 0 warnings and 0 errors; all 5 XML files parsed and had no duplicate `defName` values. No automated test project exists in this repository.
 - No release ZIP is included.
 

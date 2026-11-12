@@ -7,10 +7,8 @@ public class StockifyDesignationTool : Verse.Designator
     public StockifyDesignationTool()
     {
         defaultLabel = "Stockify Designate Storage Area";
-        defaultDesc = "Drag to select an area. Storage buildings inside will join a network.";
+        defaultDesc = "Drag to add or remove storage tiles. Only valid stored items on selected tiles are counted.";
     }
-
-    public CellRect SelectionArea { get; set; } = CellRect.Empty;
 
     public override bool DragDrawMeasurements => true;
 
@@ -31,48 +29,56 @@ public class StockifyDesignationTool : Verse.Designator
 
     public override void DesignateSingleCell(IntVec3 cell)
     {
-        FinalizeNetworkCreation(CellRect.SingleCell(cell), Find.CurrentMap);
+        FinalizeNetworkCreation(new[] { cell }, Find.CurrentMap);
     }
 
     public override void DesignateMultiCell(IEnumerable<IntVec3> cells)
     {
-        var area = CellRect.FromCellList(cells);
-        if (!area.IsEmpty)
-        {
-            FinalizeNetworkCreation(area, Find.CurrentMap);
-        }
+        FinalizeNetworkCreation(cells, Find.CurrentMap);
     }
 
-    private void FinalizeNetworkCreation(CellRect area, Map map)
+    private void FinalizeNetworkCreation(IEnumerable<IntVec3> selectedCells, Map map)
     {
         var mapComponent = map?.GetComponent<StockifyMapComponent>();
-        if (mapComponent == null) return;
+        if (mapComponent == null)
+            return;
 
-        var overlapsExisting = mapComponent.Networks.Any(network =>
-            network != _currentNetwork && AreasOverlap(area, network.DesignatedArea));
-        if (_currentNetwork != null)
+        var cells = selectedCells?
+            .Where(cell => cell.InBounds(map))
+            .Distinct()
+            .ToList() ?? new List<IntVec3>();
+        if (cells.Count == 0)
+            return;
+
+        if (_currentNetwork != null && mapComponent.Networks.Contains(_currentNetwork))
         {
-            _currentNetwork.DesignatedArea = area;
+            var updatedCells = new HashSet<IntVec3>(_currentNetwork.DesignatedCells);
+            foreach (var cell in cells)
+            {
+                if (!updatedCells.Add(cell))
+                    updatedCells.Remove(cell);
+            }
+
+            _currentNetwork.SetDesignatedCells(updatedCells);
             mapComponent.RebuildShelfRegistration();
-            Messages.Message($"Updated network {_currentNetwork.Name} ({area.Area} cells).",
+            Messages.Message(
+                $"Updated {_currentNetwork.Name}: {_currentNetwork.DesignatedCells.Count} designated tiles.",
                 MessageTypeDefOf.PositiveEvent);
-            ShowOverlapWarning(overlapsExisting);
+            ShowOverlapWarning(_currentNetwork.DesignatedCells.Any(cell => mapComponent.Networks
+                .TakeWhile(network => network != _currentNetwork)
+                .Any(network => network.DesignatedCells.Contains(cell))));
             return;
         }
 
         var network = mapComponent.CreateNetwork(
-            $"Storage Area {mapComponent.Networks.Count + 1}", area);
+            $"Storage Area {mapComponent.Networks.Count + 1}", cells);
         _currentNetwork = network;
-
-        Messages.Message($"Created network {network.Name} with {network.RegisteredShelves.Count} shelves.",
+        Messages.Message(
+            $"Created {network.Name} with {network.DesignatedCells.Count} designated tiles.",
             MessageTypeDefOf.PositiveEvent);
-        ShowOverlapWarning(overlapsExisting);
-    }
-
-    private static bool AreasOverlap(CellRect first, CellRect second)
-    {
-        return first.minX <= second.maxX && first.maxX >= second.minX &&
-               first.minZ <= second.maxZ && first.maxZ >= second.minZ;
+        ShowOverlapWarning(cells.Any(cell => mapComponent.Networks
+            .TakeWhile(candidate => candidate != network)
+            .Any(candidate => candidate.DesignatedCells.Contains(cell))));
     }
 
     private static void ShowOverlapWarning(bool overlapsExisting)
@@ -80,7 +86,7 @@ public class StockifyDesignationTool : Verse.Designator
         if (overlapsExisting)
         {
             Messages.Message(
-                "Stockify storage areas overlap. Buildings in the overlap belong to the earlier network.",
+                "Stockify storage areas overlap. Items in overlapping tiles belong to the earlier area.",
                 MessageTypeDefOf.NeutralEvent);
         }
     }

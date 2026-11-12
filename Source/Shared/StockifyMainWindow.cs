@@ -106,6 +106,7 @@ public class StockifyMainWindow : Verse.Window
     private void DrawNetworkTab(Listing_Standard listing)
     {
         listing.Label($"Shelves: {_selectedNetwork.RegisteredShelves.Count}");
+        listing.Label($"Designated tiles: {_selectedNetwork.DesignatedCells.Count}");
         var incoming = CountIncomingItems(_selectedNetwork);
         var outgoingDemand = _mapComponent.LocalShelves
             .Sum(shelf => shelf.GetOutstandingDemandFrom(_selectedNetwork));
@@ -129,7 +130,7 @@ public class StockifyMainWindow : Verse.Window
             StockifyMod.Instance.DesignationTool.StartNewNetwork();
             Find.DesignatorManager.Select(StockifyMod.Instance.DesignationTool);
         }
-        if (Widgets.ButtonText(listing.GetRect(30f), "Resize selected warehouse"))
+        if (Widgets.ButtonText(listing.GetRect(30f), "Edit selected storage area"))
         {
             StockifyMod.Instance.DesignationTool.SetNetwork(_selectedNetwork);
             Find.DesignatorManager.Select(StockifyMod.Instance.DesignationTool);
@@ -143,6 +144,19 @@ public class StockifyMainWindow : Verse.Window
             _selectedNetwork.Name = _newNetworkName.Trim();
             _newNetworkName = "";
         }
+
+        if (Widgets.ButtonText(listing.GetRect(30f), "Delete selected storage area"))
+        {
+            var network = _selectedNetwork;
+            Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation(
+                $"Delete storage area '{network.Name}'? Shelf assignments to it will be removed.",
+                () =>
+                {
+                    _mapComponent.RemoveNetwork(network);
+                    StockifyMod.Instance.DesignationTool.StartNewNetwork();
+                    _selectedNetwork = _mapComponent.Networks.FirstOrDefault();
+                }));
+        }
     }
 
     private static int CountIncomingItems(StockifyNetwork network)
@@ -151,9 +165,8 @@ public class StockifyMainWindow : Verse.Window
         if (map == null)
             return 0;
 
-        var storageCells = new HashSet<IntVec3>(network.RegisteredShelves
-            .Where(shelf => shelf.Thing is Building_Storage)
-            .SelectMany(shelf => ((Building_Storage)shelf.Thing).AllSlotCells()));
+        var storageCells = new HashSet<IntVec3>(network.DesignatedCells
+            .Where(cell => network.ContainsCell(cell, map)));
         var workGivers = new HashSet<WorkGiverDef>
         {
             DefDatabase<WorkGiverDef>.GetNamed("StockifyReplenishShelf"),

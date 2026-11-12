@@ -31,11 +31,7 @@ public class StockifyWorkGiver : WorkGiver_Scanner
         {
             if ((IsGetWorkGiver ? !network.GetEnabled : !network.PullEnabled && !network.OutputEnabled) ||
                 !network.AllowsMaterial(item) ||
-                !network.RegisteredShelves.Any(shelf =>
-                    shelf.Thing.TryGetComp<CompStockifyShelf>() == null &&
-                    shelf.Thing is Building_Storage storage &&
-                    storage.GetStoreSettings()?.AllowedToAccept(item) == true &&
-                    storage.GetSlotGroup()?.HeldThings.Contains(item) == true))
+                !network.IsValidStorageCell(item.Position, pawn.Map, item))
                 continue;
 
             if (IsGetWorkGiver || network.PullEnabled)
@@ -85,23 +81,15 @@ public class StockifyWorkGiver : WorkGiver_Scanner
                     out var bestStoreCell, false))
             {
                 foreach (var network in mapComponent.Networks.Where(candidate =>
-                             candidate.InputEnabled && candidate.AllowsMaterial(item))
+                             candidate.InputEnabled &&
+                             candidate.AllowsMaterial(item) &&
+                             candidate.IsValidStorageCell(bestStoreCell, pawn.Map, item))
                          .OrderByDescending(candidate => candidate.StoragePriority))
                 {
-                    foreach (var destinationShelf in network.RegisteredShelves)
-                    {
-                        if (destinationShelf.Thing is not Building_Storage destination ||
-                            !destination.AllSlotCells().Contains(bestStoreCell) ||
-                            destination.GetStoreSettings()?.AllowedToAccept(item) != true ||
-                            !pawn.CanReserveAndReach(
-                                destination, PathEndMode, Danger.Some, 1, -1, null, forced))
-                            continue;
-
-                        var inputJob = HaulAIUtility.HaulToCellStorageJob(
-                            pawn, item, bestStoreCell, forced);
-                        if (inputJob != null)
-                            return inputJob;
-                    }
+                    var inputJob = HaulAIUtility.HaulToCellStorageJob(
+                        pawn, item, bestStoreCell, forced);
+                    if (inputJob != null)
+                        return inputJob;
                 }
             }
         }
@@ -129,26 +117,32 @@ public class StockifyWorkGiver : WorkGiver_Scanner
                              comp.SourceNetworkIds.Contains(candidate.ID))
                          .OrderByDescending(candidate => candidate.StoragePriority))
             {
-                foreach (var destinationShelf in network.RegisteredShelves)
+                var currentPriority = StoreUtility.TryGetValidStoragePriority(
+                    item, out var itemPriority)
+                    ? itemPriority
+                    : StoragePriority.Unstored;
+                var destinationCell = network.DesignatedCells
+                    .Where(cell => network.IsValidStorageCell(cell, pawn.Map, item))
+                    .Where(cell => GetStoragePriorityAt(pawn.Map, cell) >= currentPriority)
+                    .Where(cell => StoreUtility.IsGoodStoreCell(
+                        cell, pawn.Map, item, pawn, Faction.OfPlayer))
+                    .OrderBy(cell => cell.DistanceTo(pawn.Position))
+                    .Select(cell => (IntVec3?)cell)
+                    .FirstOrDefault();
+                if (!destinationCell.HasValue)
+                    continue;
+
+                var inFlight = CountInFlight(pawn.Map, item.def, destinationCell.Value);
+                var needed = excess - inFlight;
+                if (needed <= 0)
+                    continue;
+
+                var job = HaulAIUtility.HaulToCellStorageJob(
+                    pawn, item, destinationCell.Value, forced);
+                if (job != null)
                 {
-                    if (destinationShelf.Thing is not Building_Storage destination ||
-                        destination.GetStoreSettings()?.AllowedToAccept(item) != true ||
-                        !pawn.CanReserveAndReach(
-                            destination, PathEndMode, Danger.Some, 1, -1, null, forced))
-                        continue;
-
-                    var inFlight = CountInFlight(pawn.Map, item.def, destination);
-                    var needed = excess - inFlight;
-                    if (needed <= 0)
-                        continue;
-
-                    var job = HaulAIUtility.HaulToCellStorageJob(
-                        pawn, item, destination.Position, forced);
-                    if (job != null)
-                    {
-                        job.count = Math.Min(needed, item.stackCount);
-                        return job;
-                    }
+                    job.count = Math.Min(needed, item.stackCount);
+                    return job;
                 }
             }
         }
@@ -170,12 +164,17 @@ public class StockifyWorkGiver : WorkGiver_Scanner
 
     private static int CountInFlight(Map map, ThingDef material, Building_Storage destination)
     {
+        return CountInFlight(map, material, destination.Position);
+    }
+
+    private static int CountInFlight(Map map, ThingDef material, IntVec3 destinationCell)
+    {
         var count = 0;
         foreach (var pawn in map.mapPawns.AllPawnsSpawned)
         {
             var job = pawn.CurJob;
             if (job?.def != JobDefOf.HaulToCell ||
-                job.targetB.Cell != destination.Position ||
+                job.targetB.Cell != destinationCell ||
                 job.targetA.Thing?.def != material)
                 continue;
 
@@ -183,5 +182,18 @@ public class StockifyWorkGiver : WorkGiver_Scanner
         }
 
         return count;
+    }
+
+    private static StoragePriority GetStoragePriorityAt(Map map, IntVec3 cell)
+    {
+        var storage = map.thingGrid.ThingsListAt(cell)
+            .OfType<Building_Storage>()
+            .FirstOrDefault(building => building.AllSlotCells().Contains(cell));
+        if (storage != null)
+            return storage.GetStoreSettings()?.Priority ?? StoragePriority.Unstored;
+
+        return map.zoneManager.ZoneAt(cell) is Zone_Stockpile stockpile
+            ? stockpile.GetStoreSettings()?.Priority ?? StoragePriority.Unstored
+            : StoragePriority.Unstored;
     }
 }

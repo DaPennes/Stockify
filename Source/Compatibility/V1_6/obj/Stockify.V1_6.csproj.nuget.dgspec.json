@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "c:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\Stockify\\Source\\Compatibility\\V1_6\\Stockify.V1_6.csproj": {}
+    "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\Stockify\\Source\\Compatibility\\V1_6\\Stockify.V1_6.csproj": {}
   },
   "projects": {
-    "c:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\Stockify\\Source\\Compatibility\\V1_6\\Stockify.V1_6.csproj": {
+    "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\Stockify\\Source\\Compatibility\\V1_6\\Stockify.V1_6.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\Stockify\\Source\\Compatibility\\V1_6\\Stockify.V1_6.csproj",
+        "projectUniqueName": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\Stockify\\Source\\Compatibility\\V1_6\\Stockify.V1_6.csproj",
         "projectName": "Stockify",
-        "projectPath": "c:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\Stockify\\Source\\Compatibility\\V1_6\\Stockify.V1_6.csproj",
+        "projectPath": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\Stockify\\Source\\Compatibility\\V1_6\\Stockify.V1_6.csproj",
         "packagesPath": "C:\\Users\\edria\\.nuget\\packages\\",
-        "outputPath": "c:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\Stockify\\Source\\Compatibility\\V1_6\\obj\\",
+        "outputPath": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\Stockify\\Source\\Compatibility\\V1_6\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
